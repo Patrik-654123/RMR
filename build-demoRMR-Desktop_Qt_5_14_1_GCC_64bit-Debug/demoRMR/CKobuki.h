@@ -131,8 +131,9 @@ typedef struct
     unsigned short offsetL;
 
 
-
+    double robotReqX;
     double robotX;
+    double robotReqY;
     double robotY;
     double robotFi;
     double robotReqAngle;

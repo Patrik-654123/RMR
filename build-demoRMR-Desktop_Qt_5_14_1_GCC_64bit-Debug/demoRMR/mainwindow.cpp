@@ -90,7 +90,7 @@ void MainWindow::processThisRobot()
         robotdata.speedSample=0;
         robotdata.robotFi=0;
         robotdata.robotFiDeg=robotdata.robotFi*(180/PI);
-        robotdata.robotReqAngle=200;
+        robotdata.robotReqAngle=0;
     }
     /*
     if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5==0)
@@ -133,8 +133,9 @@ void MainWindow::processThisRobot()
      ui->lineEdit_5->setText(QString::number(robotdata.EncoderLeft));
      ui->lineEdit_6->setText(QString::number(robotdata.EncoderRight));
      ui->lineEdit_7->setText(QString::number(robotdata.robotSpeed));
-     ui->lineEdit_10->setText(QString::number(robotdata.robotReqSpeed));
-     ui->lineEdit_11->setText(QString::number(robotdata.robotReqAngle));
+   //  ui->lineEdit_10->setText(QString::number(robotdata.robotReqSpeed));
+   //  ui->lineEdit_11->setText(QString::number(robotdata.robotReqAngle));
+
         /// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
         /// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete
         //emit uiValuesChanged(15,rand()%100,robotdata.EncoderLeft);
@@ -220,6 +221,15 @@ void MainWindow::on_pushButton_4_clicked() //stop
    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
+void MainWindow::on_pushButton_clicked()
+{
+    std::cout<<"Buton SET"<<endl;
+
+    robotdata.robotReqX=ui->lineEdit_8->text().toDouble();
+    robotdata.robotReqY=ui->lineEdit_9->text().toDouble();
+    robotdata.robotReqSpeed=ui->lineEdit_10->text().toShort();
+    robotdata.robotReqAngle=ui->lineEdit_11->text().toDouble();
+}
 
 ///tato funkcia vas nemusi zaujimat
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
@@ -313,11 +323,11 @@ void MainWindow::robotprocess()
    unsigned char buff[50000];
 
  ////////////////////////////////////////?
-  //while(1)
-  // {
-  //     processThisRobot();
-  //     usleep(100000);
-  // }
+  while(1)
+  {
+      processThisRobot();
+      usleep(100000);
+  }
 
 
 

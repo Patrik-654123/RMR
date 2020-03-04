@@ -93,6 +93,8 @@ private slots:
 
     void on_pushButton_4_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::MainWindow *ui;
      void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
