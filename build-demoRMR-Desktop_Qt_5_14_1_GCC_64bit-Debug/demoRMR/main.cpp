@@ -6,6 +6,8 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
     w.show();
-  ///git coment
+  ///git coments
+  /// 2.zmena
+  /// zmena 3
     return a.exec();
 }
