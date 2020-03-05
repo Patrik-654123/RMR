@@ -102,15 +102,16 @@ void MainWindow::processThisRobot()
     {
         setRampSpeed();
     }
-
-    if(robotdata.robotFi != robotdata.robotReqAngle)
+    //Treba v kazdom cykle??
+    if(robotdata.robotFi != robotdata.robotReqAngle )
     {
 
         if(!robotdata.clockWiseLock)
         {
-           robotdata.clockWise = abs((int)robotdata.robotReqAngle-((int)(robotdata.robotFiDeg) % 360)) < 180;
+           robotdata.clockWise = abs(((int)robotdata.robotReqAngle % 360)-((int)(robotdata.robotFiDeg) % 360)) < 180;
            robotdata.clockWiseLock = true;
         }
+
         setAngle(robotdata.clockWise);
     }
 
@@ -315,7 +316,7 @@ void MainWindow::robotprocess()
     }
    unsigned char buff[50000];
 
- //ZAKOMENTOVAT v reale !!
+ //ZAKOMENTOVAT v reale !!..................................................
   while(1)
   {
       processThisRobot();
@@ -407,39 +408,56 @@ void MainWindow::setRampSpeed()
 void MainWindow::setAngle(bool clockwise)
 {
 
-    int angleDif = abs((int)robotdata.robotReqAngle-((int)(robotdata.robotFiDeg) % 360));
+    int angleDif = (abs((int)robotdata.robotReqAngle-((int)(robotdata.robotFiDeg) % 360)))%360;
+
+    if(!clockwise)
+        angleDif =360-angleDif;
 
     if(angleDif>5)
     {
-
         double maxRotSpeed= robotdata.clockWise ? PI/2 : -PI/2;
-        double K = maxRotSpeed/40.0;
+        double K = maxRotSpeed/100.0;
         double reqRotSpeed = K*angleDif;
         double step = 0.04;
 
+        std::cout<<"required speed regulator: "<<reqRotSpeed<<endl;
+
+        /*
         if (reqRotSpeed > robotdata.robotReqRotSpeed){
 
             if (robotdata.clockWise)
                 robotdata.robotReqRotSpeed += step;
             else
                 robotdata.robotReqRotSpeed -= step;
-        }else{
+        }
+        else{
 
             if (!robotdata.clockWise)
+                robotdata.robotReqRotSpeed=reqRotSpeed;
+            robotdata.robotReqRotSpeed += step;
+            else
+            robotdata.robotReqRotSpeed -= step;
+        }*/
+        //rozbehni po rampe
+        if (abs(reqRotSpeed) > abs(robotdata.robotReqRotSpeed)){
+
+            if (robotdata.clockWise)
                 robotdata.robotReqRotSpeed += step;
             else
                 robotdata.robotReqRotSpeed -= step;
         }
+        //doreguluj pomocou regulatora, resp ak regulator vypocital mensi akcny zasa ako je rampa t.j. reglacna odchylka sa zmensuje
+        else
+            robotdata.robotReqRotSpeed=reqRotSpeed;
 
-        if (robotdata.robotReqRotSpeed > maxRotSpeed)
+        if (abs(robotdata.robotReqRotSpeed) > abs(maxRotSpeed))
             robotdata.robotReqRotSpeed = maxRotSpeed;
     }
     else
-    {
-         robotdata.robotReqRotSpeed=0;
-    }
+        robotdata.robotReqRotSpeed=0;
 
-    std::cout<<angleDif<<endl;
+
+    std::cout<<"actual robot speed: "<<robotdata.robotReqRotSpeed<<endl;
 
     std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
