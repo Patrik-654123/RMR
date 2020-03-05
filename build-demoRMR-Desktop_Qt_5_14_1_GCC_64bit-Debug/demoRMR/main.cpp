@@ -10,5 +10,6 @@ int main(int argc, char *argv[])
   /// 2.zmena
   /// zmena 3
   /// zmena 4
+  /// zmena 5
     return a.exec();
 }
