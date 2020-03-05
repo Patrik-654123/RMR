@@ -218,6 +218,7 @@ DIST          = /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/spec_pre.prf 
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/qt_config.prf \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/linux-g++/qmake.conf \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/spec_post.prf \
+		../demoRMR/.qmake.stash \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/exclusive_builds.prf \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/toolchain.prf \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/default_pre.prf \
@@ -413,6 +414,7 @@ Makefile: ../demoRMR/demoRMR.pro /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/linux
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/qt_config.prf \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/linux-g++/qmake.conf \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/exclusive_builds.prf \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/toolchain.prf \
 		/home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/default_pre.prf \
@@ -596,6 +598,7 @@ Makefile: ../demoRMR/demoRMR.pro /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/linux
 /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/qt_config.prf:
 /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/linux-g++/qmake.conf:
 /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/exclusive_builds.prf:
 /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/toolchain.prf:
 /home/patrik/Qt5.9.1/5.9.1/gcc_64/mkspecs/features/default_pre.prf:
