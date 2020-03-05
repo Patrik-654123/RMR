@@ -81,8 +81,8 @@ void MainWindow::processThisRobot()
         robotdata.offsetR=robotdata.EncoderRight;
         robotdata.offsetL=robotdata.EncoderLeft;
         robotdata.robotOn=true;
-        std::cout<<robotdata.offsetL<<' '<<  robotdata.offsetR<<" -encoder values set"<<endl;
-       // robotdata.robotFi=PI/4;
+        std::cout<<"encoder values (L,R): "<<robotdata.offsetL<<' '<<  robotdata.offsetR<<endl;
+        //other starting values
         robotdata.robotX=0;
         robotdata.robotY=0;
         robotdata.robotReqSpeed=0;
@@ -124,9 +124,6 @@ void MainWindow::processThisRobot()
     {
 
     ///ak nastavite hodnoty priamo do prvkov okna,ako je to na tychto zakomentovanych riadkoch tak sa moze stat ze vam program padne
-    //ui->lineEdit_2->setText(QString::number(robotdata.EncoderRight));
-    //ui->lineEdit_3->setText(QString::number(robotdata.EncoderLeft));
-    //ui->lineEdit_4->setText(QString::number(robotdata.GyroAngle));
      ui->lineEdit_2->setText(QString::number(robotdata.robotX));
      ui->lineEdit_3->setText(QString::number(robotdata.robotY));
      ui->lineEdit_4->setText(QString::number(robotdata.robotFiDeg));
@@ -148,10 +145,10 @@ void MainWindow::processThisRobot()
 
 void MainWindow::processThisLidar(LaserMeasurement &laserData)
 {
-     mutex.lock();//idem prepisovat copyOfLaserData ktoru pouziva paintEvent
+    mutex.lock();//idem prepisovat copyOfLaserData ktoru pouziva paintEvent
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
-     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
+    // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
     updateLaserPicture=1;
     mutex.unlock();//skoncil som
@@ -204,7 +201,6 @@ void MainWindow::on_pushButton_3_clicked() //back
 
 void MainWindow::on_pushButton_6_clicked() //left
 {
-
     std::vector<unsigned char> mess=robot.setRotationSpeed(M_PI/2);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
@@ -235,9 +231,7 @@ void MainWindow::on_pushButton_clicked()
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
 void MainWindow::laserprocess()
 {
-
     // Initialize Winsock
-
     las_slen = sizeof(las_si_other);
     if ((las_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
@@ -288,7 +282,6 @@ void MainWindow::laserprocess()
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z robota (UDP komunikacia)
 void MainWindow::robotprocess()
 {
-
     if ((rob_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
 
@@ -322,13 +315,13 @@ void MainWindow::robotprocess()
     }
    unsigned char buff[50000];
 
- ////////////////////////////////////////?
+ //ZAKOMENTOVAT v reale !!
   while(1)
   {
       processThisRobot();
       usleep(100000);
   }
-
+//...........................................................................
 
 
     while(1)
@@ -352,13 +345,11 @@ void MainWindow::robotprocess()
         {
             processThisRobot();
         }
-
-
     }
 }
 
 
-//funkcia nastavenie rychlosti po S-krivke
+//Funkcia nastavenie rychlosti po S-krivke
 void MainWindow::setSpeed()
 {
     static double x;
@@ -366,19 +357,19 @@ void MainWindow::setSpeed()
 
     if(robotdata.speedSample<=0)
     {
-    k=(29900-40*robotdata.robotReqSpeed)/590;
-    x=(60+0.3*abs(robotdata.robotSpeed-robotdata.robotReqSpeed))/300;
-    robotdata.robotTMpSpeed=robotdata.robotSpeed;
-    std::cout<<"robot rychlost::"<<robotdata.robotTMpSpeed<<"  cas regulacie: "<<x<<"  zosilnenie: "<<k<<endl;
+        k=(29900-40*robotdata.robotReqSpeed)/590;
+        x=(60+0.3*abs(robotdata.robotSpeed-robotdata.robotReqSpeed))/300;
+        robotdata.robotTMpSpeed=robotdata.robotSpeed;
+        std::cout<<"robot rychlost::"<<robotdata.robotTMpSpeed<<"  cas regulacie: "<<x<<"  zosilnenie: "<<k<<endl;
     }
 
     if(robotdata.robotReqSpeed > robotdata.robotSpeed)
     {
-    robotdata.robotSpeed=robotdata.robotTMpSpeed+abs(robotdata.robotReqSpeed-robotdata.robotTMpSpeed)/(1+exp(-k*(robotdata.speedSample-(x/2.0))));
+        robotdata.robotSpeed=robotdata.robotTMpSpeed+abs(robotdata.robotReqSpeed-robotdata.robotTMpSpeed)/(1+exp(-k*(robotdata.speedSample-(x/2.0))));
     }
     if(robotdata.robotReqSpeed < robotdata.robotSpeed)
     {
-    robotdata.robotSpeed= robotdata.robotTMpSpeed-1*abs(robotdata.robotReqSpeed-robotdata.robotTMpSpeed)/(1+exp(-k*(robotdata.speedSample-(x/2.0))));
+        robotdata.robotSpeed= robotdata.robotTMpSpeed-1*abs(robotdata.robotReqSpeed-robotdata.robotTMpSpeed)/(1+exp(-k*(robotdata.speedSample-(x/2.0))));
     }
 
     robotdata.speedSample=robotdata.speedSample+speedStep;
@@ -387,12 +378,12 @@ void MainWindow::setSpeed()
 
     std::vector<unsigned char> mess=robot.setTranslationSpeed(robotdata.robotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
+
     if(robotdata.speedSample>=x)
     {
         robotdata.robotSpeed=robotdata.robotReqSpeed;
         robotdata.speedSample=0;
     }
-
 }
 //funkcia nastavenie rychlosti po rampe
 void MainWindow::setRampSpeed()
@@ -411,14 +402,13 @@ void MainWindow::setRampSpeed()
     std::cout<<"rychlost= "<<robotdata.robotSpeed<<endl;
     std::vector<unsigned char> mess=robot.setTranslationSpeed(robotdata.robotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
-
-
 }
 //fukcia nastavenie uhla
 void MainWindow::setAngle(bool clockwise)
 {
 
     int angleDif = abs((int)robotdata.robotReqAngle-((int)(robotdata.robotFiDeg) % 360));
+
     if(angleDif>5)
     {
 
@@ -426,7 +416,6 @@ void MainWindow::setAngle(bool clockwise)
         double K = maxRotSpeed/40.0;
         double reqRotSpeed = K*angleDif;
         double step = 0.04;
-
 
         if (reqRotSpeed > robotdata.robotReqRotSpeed){
 
@@ -444,27 +433,21 @@ void MainWindow::setAngle(bool clockwise)
 
         if (robotdata.robotReqRotSpeed > maxRotSpeed)
             robotdata.robotReqRotSpeed = maxRotSpeed;
-
-
     }
     else
     {
          robotdata.robotReqRotSpeed=0;
     }
+
     std::cout<<angleDif<<endl;
-
-
 
     std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
-
-
-
 }
 //funkcia lokalizacie
 void MainWindow::processLocalization()
 {
-    //premene
+    //pomocne premene
     double lr,ll,l,dAlfa,Fi_k1;
 
     //Osetrenie pretecenia encoderov
@@ -484,7 +467,7 @@ void MainWindow::processLocalization()
     }
     else
     {
-    ll=(robot.getTickConst())*(robotdata.EncoderLeft-robotdata.offsetL);
+        ll=(robot.getTickConst())*(robotdata.EncoderLeft-robotdata.offsetL);
     }
     //Pravy
     if(abs(robotdata.EncoderRight-robotdata.offsetR)>(numeric_limits<unsigned short>::max()/2))
@@ -493,39 +476,37 @@ void MainWindow::processLocalization()
         {
             lr=(robot.getTickConst())*(robotdata.EncoderRight+(numeric_limits<unsigned short>::max()-robotdata.offsetR));
             std::cout<<"pravy pretiekol"<<endl;
-        }
-        else
+        }else
         {
             lr=-1*(robot.getTickConst())*((numeric_limits<unsigned short>::max()-robotdata.EncoderRight)+robotdata.offsetR);
             std::cout<<"pravy podtiekol"<<endl;
         }
-    }
-    else
+    }else
     {
-    lr=(robot.getTickConst())*(robotdata.EncoderRight-robotdata.offsetR);
+        lr=(robot.getTickConst())*(robotdata.EncoderRight-robotdata.offsetR);
     }
+
+    //ulozenie hodnot encoderov
     robotdata.offsetR=robotdata.EncoderRight;
     robotdata.offsetL=robotdata.EncoderLeft;
 
     l=(ll+lr)/2;
-
     dAlfa=(lr-ll)/robot.getBconst();
     Fi_k1=robotdata.robotFi+dAlfa;
 
     if(ll==lr)
     {
-    //seria priamociarych pohybov
-    robotdata.robotX=robotdata.robotX+l*cos(robotdata.robotFi);
-    robotdata.robotY=robotdata.robotY+l*sin(robotdata.robotFi);
-    }
-   else
+        //seria priamociarych pohybov
+        robotdata.robotX=robotdata.robotX+l*cos(robotdata.robotFi);
+        robotdata.robotY=robotdata.robotY+l*sin(robotdata.robotFi);
+    }else
     {
-    //pohyb po kruznici
-    robotdata.robotX=robotdata.robotX+((robot.getBconst()*(lr+ll))/(2*(lr-ll)))*(sin(Fi_k1)-sin(robotdata.robotFi));
-    robotdata.robotY=robotdata.robotY+((robot.getBconst()*(lr+ll))/(2*(lr-ll)))*(cos(Fi_k1)-cos(robotdata.robotFi));
+        //pohyb po kruznici
+        robotdata.robotX=robotdata.robotX+((robot.getBconst()*(lr+ll))/(2*(lr-ll)))*(sin(Fi_k1)-sin(robotdata.robotFi));
+        robotdata.robotY=robotdata.robotY+((robot.getBconst()*(lr+ll))/(2*(lr-ll)))*(cos(Fi_k1)-cos(robotdata.robotFi));
     }
 
-    //posunutie uhla uloz
+    //Ulozenie hodnot uhlov
     robotdata.robotFi=Fi_k1;
     robotdata.robotFiDeg=robotdata.robotFi*(180/PI);
 }
