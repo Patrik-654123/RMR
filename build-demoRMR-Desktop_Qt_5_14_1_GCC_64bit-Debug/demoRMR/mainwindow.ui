@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>841</width>
+    <width>861</width>
     <height>629</height>
    </rect>
   </property>
@@ -393,7 +393,7 @@
            </size>
           </property>
           <property name="text">
-           <string>SET REQURED</string>
+           <string>SET REQUIRED</string>
           </property>
          </widget>
         </item>
