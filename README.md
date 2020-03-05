@@ -1,4 +1,4 @@
 # RMR
-RMR_projekt_robot zmena
+RMR_projekt_robot zmena zmena prijata
 
 
