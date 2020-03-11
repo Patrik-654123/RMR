@@ -20,7 +20,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ///tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    ipaddress="192.168.1.14";
+    //ipaddress="192.168.1.14";
+    ipaddress = "127.0.0.1";  //simulator ip
+
     ui->setupUi(this);
     datacounter=0;
 }
@@ -98,14 +100,13 @@ void MainWindow::processThisRobot()
         setSpeed();
     }
     */
-    if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5==0)
+    if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5 == 0)
     {
         setRampSpeed();
     }
-    //Treba v kazdom cykle??
-    if(robotdata.robotFi != robotdata.robotReqAngle )
+    //Treba v kazdom cykle?? / Treba dat podienku necitlivosti, premenu ktora urci ze robot je natoceny
+/*   if(robotdata.robotFi != robotdata.robotReqAngle )
     {
-
         if(!robotdata.clockWiseLock)
         {
            robotdata.clockWise = abs(((int)robotdata.robotReqAngle % 360)-((int)(robotdata.robotFiDeg) % 360)) < 180;
@@ -114,6 +115,15 @@ void MainWindow::processThisRobot()
 
         setAngle(robotdata.clockWise);
     }
+*/
+
+    //Nova funkcia na polohovanie uhla
+    if(robotdata.robotFiDeg != robotdata.robotReqAngle && datacounter % 5 == 0)
+    {
+        setAngle();
+    }
+
+
 
     processLocalization();
 
@@ -131,8 +141,8 @@ void MainWindow::processThisRobot()
      ui->lineEdit_5->setText(QString::number(robotdata.EncoderLeft));
      ui->lineEdit_6->setText(QString::number(robotdata.EncoderRight));
      ui->lineEdit_7->setText(QString::number(robotdata.robotSpeed));
-   //  ui->lineEdit_10->setText(QString::number(robotdata.robotReqSpeed));
-   //  ui->lineEdit_11->setText(QString::number(robotdata.robotReqAngle));
+ //  ui->lineEdit_10->setText(QString::number(robotdata.robotReqSpeed));
+ //  ui->lineEdit_11->setText(QString::number(robotdata.robotReqAngle));
 
         /// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
         /// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete
@@ -184,7 +194,7 @@ void MainWindow::on_pushButton_2_clicked() //forward
     robotdata.robotReqSpeed=300;
     robotdata.speedSample=0;
     //pohyb dopredu
-//std::vector<unsigned char> mess=robot.setTranslationSpeed(300);
+    //std::vector<unsigned char> mess=robot.setTranslationSpeed(300);
 
 ///ak by ste chceli miesto pohybu dopredu napriklad pohyb po kruznici s polomerom 1 meter zavolali by ste funkciu takto:
 /// std::vector<unsigned char> mess=robot.setArcSpeed(100,1000);
@@ -193,11 +203,8 @@ void MainWindow::on_pushButton_2_clicked() //forward
 
 void MainWindow::on_pushButton_3_clicked() //back
 {
-    robotdata.robotReqSpeed=-300;
-    robotdata.speedSample=0;
-
-   // std::vector<unsigned char> mess=robot.setTranslationSpeed(-250);
-   // if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
+    std::vector<unsigned char> mess=robot.setTranslationSpeed(-250);
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
 void MainWindow::on_pushButton_6_clicked() //left
@@ -218,7 +225,7 @@ void MainWindow::on_pushButton_4_clicked() //stop
    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
-void MainWindow::on_pushButton_clicked()
+void MainWindow::on_pushButton_clicked() //set req. values
 {
     std::cout<<"Buton SET"<<endl;
 
@@ -226,6 +233,13 @@ void MainWindow::on_pushButton_clicked()
     robotdata.robotReqY=ui->lineEdit_9->text().toDouble();
     robotdata.robotReqSpeed=ui->lineEdit_10->text().toShort();
     robotdata.robotReqAngle=ui->lineEdit_11->text().toDouble();
+
+    //odomkunie zamku na prepocet otocenia,
+    robotdata.clockWiseLock=false;
+    robotdata.robotReqRotSpeed=0;
+    //zastav robota
+    on_pushButton_4_clicked();
+
 }
 
 ///tato funkcia vas nemusi zaujimat
@@ -317,12 +331,12 @@ void MainWindow::robotprocess()
    unsigned char buff[50000];
 
  //ZAKOMENTOVAT v reale !!..................................................
-  while(1)
-  {
-      processThisRobot();
-      usleep(100000);
-  }
-//...........................................................................
+ //while(1)
+ // {
+ //     processThisRobot();
+ //    usleep(100000);
+ // }
+ //...........................................................................
 
 
     while(1)
@@ -413,6 +427,7 @@ void MainWindow::setAngle(bool clockwise)
     if(!clockwise)
         angleDif =360-angleDif;
 
+    std::cout<<"dif "<<angleDif<<endl;
     if(angleDif>5)
     {
         double maxRotSpeed= robotdata.clockWise ? PI/2 : -PI/2;
@@ -446,22 +461,62 @@ void MainWindow::setAngle(bool clockwise)
             else
                 robotdata.robotReqRotSpeed -= step;
         }
-        //doreguluj pomocou regulatora, resp ak regulator vypocital mensi akcny zasa ako je rampa t.j. reglacna odchylka sa zmensuje
+        //doreguluj pomocou regulatora, resp. ak regulator vypocital mensi akcny zasa ako je rampa t.j. reglacna odchylka sa zmensuje
         else
             robotdata.robotReqRotSpeed=reqRotSpeed;
-
+        //obmedzenie max rychlosti
         if (abs(robotdata.robotReqRotSpeed) > abs(maxRotSpeed))
             robotdata.robotReqRotSpeed = maxRotSpeed;
     }
     else
-        robotdata.robotReqRotSpeed=0;
+    {
+        robotdata.robotReqRotSpeed=0;  //robot dosiahol natocenie
 
-
+    }
     std::cout<<"actual robot speed: "<<robotdata.robotReqRotSpeed<<endl;
 
     std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
+
+//funkcia nastavenie uhla nova
+void MainWindow::setAngle()
+{
+    int deltaFi=((int)robotdata.robotReqAngle % 360)-((int)robotdata.robotFiDeg % 360);
+
+    if(deltaFi > 180)
+        deltaFi=deltaFi-360;
+    if(deltaFi <-180)
+        deltaFi=deltaFi+360;
+
+    if(abs(deltaFi)>5)
+    {
+        double maxRotSpeed= (deltaFi >= 0) ? PI/2 : -PI/2;
+        double step = (deltaFi >= 0) ? 0.04 : -0.04;
+        double K = maxRotSpeed/100.0;
+        double reqRotSpeed = K*abs(deltaFi);
+
+        if (abs(reqRotSpeed) > abs(robotdata.robotReqRotSpeed))
+            robotdata.robotReqRotSpeed += step;
+        else
+            robotdata.robotReqRotSpeed=reqRotSpeed;
+
+        if(abs(robotdata.robotReqRotSpeed) > abs(maxRotSpeed))
+            robotdata.robotReqRotSpeed=maxRotSpeed;
+
+    }else
+    {
+        robotdata.robotReqRotSpeed=0;
+        robotdata.robotReqAngle=robotdata.robotFiDeg;
+    }
+
+    std::cout<<"rychlost robota "<<robotdata.robotReqRotSpeed<<endl;
+
+    std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
+
+}
+
 //funkcia lokalizacie
 void MainWindow::processLocalization()
 {

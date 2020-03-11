@@ -39,6 +39,8 @@ public:
     void setSpeed();
     void setRampSpeed();
     void setAngle(bool clockwise);
+    //skusobna funkcia
+    void setAngle();
 
     /*
     //nase vlakno
