@@ -85,8 +85,8 @@ void MainWindow::processThisRobot()
         robotdata.robotOn=true;
         std::cout<<"encoder values (L,R): "<<robotdata.offsetL<<' '<<  robotdata.offsetR<<endl;
         //other starting values
-        robotdata.robotX=0;
-        robotdata.robotY=0;
+        robotdata.robotX=1;
+        robotdata.robotY=1;
         robotdata.robotReqSpeed=0;
         robotdata.robotSpeed=0;
         robotdata.speedSample=0;
@@ -215,6 +215,8 @@ void MainWindow::on_pushButton_6_clicked() //left
 
 void MainWindow::on_pushButton_5_clicked() //right
 {
+   //std::vector<unsigned char> mess=robot.setArcSpeed(100,500);
+   // if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
     std::vector<unsigned char> mess=robot.setRotationSpeed(-M_PI/2);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
@@ -576,7 +578,7 @@ void MainWindow::processLocalization()
     {
         //pohyb po kruznici
         robotdata.robotX=robotdata.robotX+((robot.getBconst()*(lr+ll))/(2*(lr-ll)))*(sin(Fi_k1)-sin(robotdata.robotFi));
-        robotdata.robotY=robotdata.robotY+((robot.getBconst()*(lr+ll))/(2*(lr-ll)))*(cos(Fi_k1)-cos(robotdata.robotFi));
+        robotdata.robotY=robotdata.robotY-((robot.getBconst()*(lr+ll))/(2*(lr-ll)))*(cos(Fi_k1)-cos(robotdata.robotFi));
     }
 
     //Ulozenie hodnot uhlov
