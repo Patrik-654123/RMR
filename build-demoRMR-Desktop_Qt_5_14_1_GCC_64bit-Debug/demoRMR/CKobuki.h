@@ -124,6 +124,8 @@ typedef struct
     signed short robotTMpSpeed;
 
     bool robotOn;
+    bool robotRotated;
+
     bool clockWiseLock;
     bool clockWise;
 

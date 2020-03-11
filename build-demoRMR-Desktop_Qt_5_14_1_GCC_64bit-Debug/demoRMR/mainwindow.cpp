@@ -118,7 +118,7 @@ void MainWindow::processThisRobot()
 */
 
     //Nova funkcia na polohovanie uhla
-    if(robotdata.robotFiDeg != robotdata.robotReqAngle && datacounter % 5 == 0)
+    if(!robotdata.robotRotated && datacounter % 5 == 0)
     {
         setAngle();
     }
@@ -142,7 +142,7 @@ void MainWindow::processThisRobot()
      ui->lineEdit_6->setText(QString::number(robotdata.EncoderRight));
      ui->lineEdit_7->setText(QString::number(robotdata.robotSpeed));
  //  ui->lineEdit_10->setText(QString::number(robotdata.robotReqSpeed));
- //  ui->lineEdit_11->setText(QString::number(robotdata.robotReqAngle));
+     ui->lineEdit_11->setText(QString::number(robotdata.robotReqAngle));
 
         /// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
         /// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete
@@ -227,7 +227,7 @@ void MainWindow::on_pushButton_4_clicked() //stop
    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
-void MainWindow::on_pushButton_clicked() //set req. values
+void MainWindow::on_pushButton_clicked()   //set req. values
 {
     std::cout<<"Buton SET"<<endl;
 
@@ -242,6 +242,12 @@ void MainWindow::on_pushButton_clicked() //set req. values
     //zastav robota
     on_pushButton_4_clicked();
 
+    //vypocitaj natocenie robota
+    robotdata.robotReqAngle=atan2(robotdata.robotReqY-robotdata.robotY,robotdata.robotReqX-robotdata.robotX)*(180/PI);
+    if(robotdata.robotReqAngle < 0)
+        robotdata.robotReqAngle += 360;
+    cout<<"req uhol natocenia "<<robotdata.robotReqAngle<<endl;
+    robotdata.robotRotated=false;
 }
 
 ///tato funkcia vas nemusi zaujimat
@@ -478,9 +484,14 @@ void MainWindow::setAngle(bool clockwise)
     std::cout<<"actual robot speed: "<<robotdata.robotReqRotSpeed<<endl;
 
     std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
-}
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}}
 
+//funkcia na polohovanie
+void MainWindow::getPossiton()
+{
+
+
+}
 //funkcia nastavenie uhla nova
 void MainWindow::setAngle()
 {
@@ -491,7 +502,7 @@ void MainWindow::setAngle()
     if(deltaFi <-180)
         deltaFi=deltaFi+360;
 
-    if(abs(deltaFi)>5)
+    if(abs(deltaFi)>3)
     {
         double maxRotSpeed= (deltaFi >= 0) ? PI/2 : -PI/2;
         double step = (deltaFi >= 0) ? 0.04 : -0.04;
@@ -509,14 +520,13 @@ void MainWindow::setAngle()
     }else
     {
         robotdata.robotReqRotSpeed=0;
-        robotdata.robotReqAngle=robotdata.robotFiDeg;
+        robotdata.robotRotated=true;
     }
 
     std::cout<<"rychlost robota "<<robotdata.robotReqRotSpeed<<endl;
 
     std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
-
 }
 
 //funkcia lokalizacie
