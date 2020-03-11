@@ -141,6 +141,7 @@ typedef struct
     double robotReqAngle;
     double robotReqRotSpeed;
     double robotFiDeg;
+    double robotRadius;
 
 
     TExtraRequestData extraInfo;

@@ -85,25 +85,32 @@ void MainWindow::processThisRobot()
         robotdata.robotOn=true;
         std::cout<<"encoder values (L,R): "<<robotdata.offsetL<<' '<<  robotdata.offsetR<<endl;
         //other starting values
+
         robotdata.robotX=1;
+        robotdata.robotReqX=1;
         robotdata.robotY=1;
+        robotdata.robotReqY=1;
+
         robotdata.robotReqSpeed=0;
         robotdata.robotSpeed=0;
         robotdata.speedSample=0;
         robotdata.robotFi=0;
         robotdata.robotFiDeg=robotdata.robotFi*(180/PI);
         robotdata.robotReqAngle=0;
+        robotdata.robotRadius=0;
     }
-    /*
+/*
     if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5==0)
     {
         setSpeed();
     }
-    */
+*/
+/*
     if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5 == 0)
     {
         setRampSpeed();
     }
+*/
     //Treba v kazdom cykle?? / Treba dat podienku necitlivosti, premenu ktora urci ze robot je natoceny
 /*   if(robotdata.robotFi != robotdata.robotReqAngle )
     {
@@ -117,10 +124,17 @@ void MainWindow::processThisRobot()
     }
 */
 
-    //Nova funkcia na polohovanie uhla
+    ///Nova funkcia na polohovanie uhla
     if(!robotdata.robotRotated && datacounter % 5 == 0)
     {
         setAngle();
+    }
+
+
+    ///Nova funkcia na polohovanie uhla
+    if(datacounter % 5 == 0)
+    {
+       //getPossiton();
     }
 
 
@@ -215,8 +229,8 @@ void MainWindow::on_pushButton_6_clicked() //left
 
 void MainWindow::on_pushButton_5_clicked() //right
 {
-   //std::vector<unsigned char> mess=robot.setArcSpeed(100,500);
-   // if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
+   // std::vector<unsigned char> mess=robot.setArcSpeed(100,-500);
+   //if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
     std::vector<unsigned char> mess=robot.setRotationSpeed(-M_PI/2);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
@@ -489,8 +503,50 @@ void MainWindow::setAngle(bool clockwise)
 //funkcia na polohovanie
 void MainWindow::getPossiton()
 {
+    double deltaX=robotdata.robotReqX-robotdata.robotX;
+    double deltaY=robotdata.robotReqY-robotdata.robotY;
+    std::cout<<"deltaX="<<deltaX<<endl;
+    std::cout<<"deltaY="<<deltaY<<endl;
 
+    if(deltaX > 0.2 || deltaY > 0.2)
+    {
+        //Patametre linearneho regulatora
+        double kRo=100;
+        double kAlfa=500;
+        double kBeta=-100;
 
+        double Ro=sqrt(pow(deltaX,2.0)+pow(deltaY,2.0));
+        double Alfa=-robotdata.robotFi+atan2(deltaX,deltaY);
+        double Beta=-robotdata.robotFi-Alfa;
+
+        //akcny zasah rychlost/polomer
+        double v=kRo*Ro;
+        double r=(v/(kAlfa*Alfa+kBeta*Beta));
+
+        //rozbeh po rampe/potom reguluj
+        if(v >= 50 && robotdata.robotSpeed < 50)
+            robotdata.robotSpeed += 5;
+        else
+            robotdata.robotSpeed = v;
+
+        if(robotdata.robotSpeed >= 300)
+            robotdata.robotSpeed = 300;
+
+        //obmedzit polomer ?
+        robotdata.robotRadius=r;
+        std::cout<<"v: "<<v<<"  r: "<<r<<endl;
+
+    }else
+    {
+        robotdata.robotSpeed=0;
+        robotdata.robotRadius=0;
+        //nova ziadana hodnota polohy,
+    }
+
+    std::cout<<"rSpeed:"<<robotdata.robotSpeed<<" rRadius:"<<robotdata.robotRadius<<endl;
+
+    std::vector<unsigned char> mess=robot.setArcSpeed(robotdata.robotSpeed,robotdata.robotRadius);
+    if(sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 //funkcia nastavenie uhla nova
 void MainWindow::setAngle()
