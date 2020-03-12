@@ -99,18 +99,14 @@ void MainWindow::processThisRobot()
         robotdata.robotReqAngle=0;
         robotdata.robotRadius=0;
     }
-/*
+
     if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5==0)
     {
-        setSpeed();
+        //setSpeed();
+        //setRampSpeed();
     }
-*/
-/*
-    if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5 == 0)
-    {
-        setRampSpeed();
-    }
-*/
+
+
     //Treba v kazdom cykle?? / Treba dat podienku necitlivosti, premenu ktora urci ze robot je natoceny
 /*   if(robotdata.robotFi != robotdata.robotReqAngle )
     {
@@ -127,12 +123,12 @@ void MainWindow::processThisRobot()
     ///Nova funkcia na polohovanie uhla
     if(!robotdata.robotRotated && datacounter % 5 == 0)
     {
-        setAngle();
+      setAngle();
     }
 
 
     ///Nova funkcia na polohovanie uhla
-    if(datacounter % 5 == 0)
+    if(robotdata.robotRotated && datacounter % 5 == 0)
     {
       getPossiton();
     }
@@ -229,7 +225,7 @@ void MainWindow::on_pushButton_6_clicked() //left
 
 void MainWindow::on_pushButton_5_clicked() //right
 {
-   std::vector<unsigned char> mess=robot.setArcSpeed(100,-20);
+   std::vector<unsigned char> mess=robot.setArcSpeed(300,-30000);
    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
    // std::vector<unsigned char> mess=robot.setRotationSpeed(-M_PI/2);
    // if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
@@ -508,7 +504,7 @@ void MainWindow::getPossiton()
     std::cout<<"deltaX="<<deltaX<<endl;
     std::cout<<"deltaY="<<deltaY<<endl;
 
-    if(deltaX > 0.2 || deltaY > 0.2)
+    if(abs(deltaX) > 0.2 || abs(deltaY) > 0.2)
     {
         //Patametre linearneho regulatora
         double kRo=300;//100;
@@ -525,20 +521,21 @@ void MainWindow::getPossiton()
         //akcny zasah rychlost/polomer
         double v=kRo*Ro;
         double r=(v/(kAlfa*Alfa+kBeta*Beta));
-        std::cout<<"R v: "<<v<<" R  r: "<<r<<endl;
+
+        robotdata.robotRadius=r;
+
         //rozbeh po rampe/potom reguluj
         if(v >= 50 && robotdata.robotSpeed < 50)
             robotdata.robotSpeed += 5;
         else
             robotdata.robotSpeed = v;
 
+        //obmedzenia
         if(robotdata.robotSpeed >= 300)
             robotdata.robotSpeed = 300;
 
-        //obmedzit polomer ?
-        robotdata.robotRadius=r;
-        std::cout<<"v: "<<v<<"  r: "<<r<<endl;
-
+        if(robotdata.robotRadius > 30000)
+            robotdata.robotRadius=(robotdata.robotRadius > 0) ? 30000 : -30000;
     }else
     {
         robotdata.robotSpeed=0;

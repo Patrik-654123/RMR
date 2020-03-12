@@ -125,6 +125,7 @@ typedef struct
 
     bool robotOn;
     bool robotRotated;
+    bool angleIsSet;
 
     bool clockWiseLock;
     bool clockWise;
