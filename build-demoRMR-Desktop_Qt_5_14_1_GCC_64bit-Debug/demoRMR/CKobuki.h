@@ -30,10 +30,12 @@
 #include <iomanip>
 
 #include <sstream>
-
+#include <queue>
 
 
 using namespace std;
+
+
 
 typedef struct
 {
@@ -144,6 +146,9 @@ typedef struct
     double robotFiDeg;
     double robotRadius;
 
+    //pozition queue
+
+    queue<pair<double,double>> positionQ;
 
     TExtraRequestData extraInfo;
 }TKobukiData;

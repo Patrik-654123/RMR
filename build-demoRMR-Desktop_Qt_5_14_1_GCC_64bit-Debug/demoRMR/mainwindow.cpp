@@ -244,21 +244,34 @@ void MainWindow::on_pushButton_clicked()   //set req. values
     robotdata.robotReqSpeed=ui->lineEdit_10->text().toShort();
     robotdata.robotReqAngle=ui->lineEdit_11->text().toDouble();
 
+
+
     //odomkunie zamku na prepocet otocenia,
     robotdata.clockWiseLock=false;
     robotdata.robotReqRotSpeed=0;
+
     //zastav robota
     on_pushButton_4_clicked();
 
-    //vypocitaj natocenie robota
+    //vypocitaj  nove natocenie robota
     robotdata.robotReqAngle=atan2(robotdata.robotReqY-robotdata.robotY,robotdata.robotReqX-robotdata.robotX)*(180/PI);
     if(robotdata.robotReqAngle < 0)
         robotdata.robotReqAngle += 360;
-    cout<<"req uhol natocenia "<<robotdata.robotReqAngle<<endl;
 
     robotdata.robotRotated=false;
+
 }
 
+void MainWindow::on_pushButton_10_clicked() //ADD XY to queue
+{
+    std::cout<<"Button ADD to Queue"<<endl;
+
+    pair<double,double> posXY;
+    posXY=make_pair(ui->lineEdit_8->text().toDouble(),ui->lineEdit_9->text().toDouble());
+
+    robotdata.positionQ.push(posXY);
+
+}
 ///tato funkcia vas nemusi zaujimat
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
 void MainWindow::laserprocess()
@@ -498,9 +511,9 @@ void MainWindow::getPossition()
         double Ro=sqrt(pow(deltaX,2.0)+pow(deltaY,2.0));
         double Alfa=-robotdata.robotFi+atan2(deltaY,deltaX);
         double Beta=-robotdata.robotFi-Alfa;
-        std::cout<<"Ro:"<<Ro<<endl;
-        std::cout<<"Alfa:"<<Alfa<<endl;
-        std::cout<<"Beta:"<<Beta<<endl;
+        //std::cout<<"Ro:"<<Ro<<endl;
+        //std::cout<<"Alfa:"<<Alfa<<endl;
+        //std::cout<<"Beta:"<<Beta<<endl;
 
         //akcny zasah rychlost/polomer
         double v=kRo*Ro;
@@ -525,9 +538,24 @@ void MainWindow::getPossition()
     {
         robotdata.robotSpeed=0;
         robotdata.robotRadius=0;
-        //dosiahol si a nastav novu
-        // rotated = false
+
         //nova ziadana hodnota polohy,
+        if(robotdata.positionQ.empty())
+        {
+
+        }
+        else{
+            robotdata.robotReqX=robotdata.positionQ.front().first;
+            robotdata.robotReqY=robotdata.positionQ.front().second;
+
+            robotdata.positionQ.pop();
+
+            //vypocitaj  nove natocenie robota
+            robotdata.robotReqAngle=atan2(robotdata.robotReqY-robotdata.robotY,robotdata.robotReqX-robotdata.robotX)*(180/PI);
+            if(robotdata.robotReqAngle < 0)
+                robotdata.robotReqAngle += 360;
+            robotdata.robotRotated=false;
+        }
     }
 
     std::cout<<"rSpeed:"<<robotdata.robotSpeed<<" rRadius:"<<robotdata.robotRadius<<endl;

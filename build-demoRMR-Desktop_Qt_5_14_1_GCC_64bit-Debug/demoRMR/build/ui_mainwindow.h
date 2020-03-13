@@ -45,32 +45,34 @@ public:
     QVBoxLayout *verticalLayout_2;
     QPushButton *pushButton_8;
     QPushButton *pushButton_7;
+    QGridLayout *gridLayout_4;
     QSpacerItem *verticalSpacer;
     QGridLayout *gridLayout_3;
-    QLineEdit *lineEdit_2;
-    QLabel *label_4;
+    QLineEdit *lineEdit_4;
+    QSpacerItem *verticalSpacer_4;
     QLineEdit *lineEdit_6;
     QLineEdit *lineEdit_5;
     QSpacerItem *verticalSpacer_2;
-    QLineEdit *lineEdit_11;
-    QLabel *label_10;
-    QLineEdit *lineEdit_8;
-    QLabel *label_3;
     QLineEdit *lineEdit_3;
     QLineEdit *lineEdit_10;
-    QLineEdit *lineEdit_4;
-    QSpacerItem *verticalSpacer_4;
+    QLineEdit *lineEdit_11;
+    QLabel *label_10;
+    QLineEdit *lineEdit_2;
+    QLabel *label_4;
     QLabel *label_7;
     QLabel *label_8;
+    QSpacerItem *verticalSpacer_3;
+    QPushButton *pushButton;
+    QLineEdit *lineEdit_8;
+    QLabel *label_3;
+    QLineEdit *lineEdit_7;
+    QLabel *label_5;
+    QLabel *label_9;
+    QLabel *label_2;
     QLabel *label;
     QLabel *label_6;
     QLineEdit *lineEdit_9;
-    QLabel *label_9;
-    QLabel *label_2;
-    QLineEdit *lineEdit_7;
-    QLabel *label_5;
-    QSpacerItem *verticalSpacer_3;
-    QPushButton *pushButton;
+    QPushButton *pushButton_10;
     QStatusBar *statusBar;
 
     void setupUi(QMainWindow *MainWindow)
@@ -185,6 +187,12 @@ public:
 
         verticalLayout_2->addWidget(pushButton_7);
 
+        gridLayout_4 = new QGridLayout();
+        gridLayout_4->setSpacing(6);
+        gridLayout_4->setObjectName(QStringLiteral("gridLayout_4"));
+
+        verticalLayout_2->addLayout(gridLayout_4);
+
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
         verticalLayout_2->addItem(verticalSpacer);
@@ -192,19 +200,18 @@ public:
         gridLayout_3 = new QGridLayout();
         gridLayout_3->setSpacing(6);
         gridLayout_3->setObjectName(QStringLiteral("gridLayout_3"));
-        lineEdit_2 = new QLineEdit(centralWidget);
-        lineEdit_2->setObjectName(QStringLiteral("lineEdit_2"));
-        sizePolicy.setHeightForWidth(lineEdit_2->sizePolicy().hasHeightForWidth());
-        lineEdit_2->setSizePolicy(sizePolicy);
-        lineEdit_2->setFocusPolicy(Qt::NoFocus);
-        lineEdit_2->setReadOnly(true);
+        lineEdit_4 = new QLineEdit(centralWidget);
+        lineEdit_4->setObjectName(QStringLiteral("lineEdit_4"));
+        sizePolicy.setHeightForWidth(lineEdit_4->sizePolicy().hasHeightForWidth());
+        lineEdit_4->setSizePolicy(sizePolicy);
+        lineEdit_4->setFocusPolicy(Qt::NoFocus);
+        lineEdit_4->setReadOnly(true);
 
-        gridLayout_3->addWidget(lineEdit_2, 7, 1, 1, 1);
+        gridLayout_3->addWidget(lineEdit_4, 13, 1, 1, 1);
 
-        label_4 = new QLabel(centralWidget);
-        label_4->setObjectName(QStringLiteral("label_4"));
+        verticalSpacer_4 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
-        gridLayout_3->addWidget(label_4, 0, 0, 1, 1);
+        gridLayout_3->addItem(verticalSpacer_4, 11, 1, 1, 1);
 
         lineEdit_6 = new QLineEdit(centralWidget);
         lineEdit_6->setObjectName(QStringLiteral("lineEdit_6"));
@@ -220,26 +227,6 @@ public:
 
         gridLayout_3->addItem(verticalSpacer_2, 2, 1, 1, 1);
 
-        lineEdit_11 = new QLineEdit(centralWidget);
-        lineEdit_11->setObjectName(QStringLiteral("lineEdit_11"));
-
-        gridLayout_3->addWidget(lineEdit_11, 12, 1, 1, 1);
-
-        label_10 = new QLabel(centralWidget);
-        label_10->setObjectName(QStringLiteral("label_10"));
-
-        gridLayout_3->addWidget(label_10, 12, 0, 1, 1);
-
-        lineEdit_8 = new QLineEdit(centralWidget);
-        lineEdit_8->setObjectName(QStringLiteral("lineEdit_8"));
-
-        gridLayout_3->addWidget(lineEdit_8, 6, 1, 1, 1);
-
-        label_3 = new QLabel(centralWidget);
-        label_3->setObjectName(QStringLiteral("label_3"));
-
-        gridLayout_3->addWidget(label_3, 13, 0, 1, 1);
-
         lineEdit_3 = new QLineEdit(centralWidget);
         lineEdit_3->setObjectName(QStringLiteral("lineEdit_3"));
         sizePolicy.setHeightForWidth(lineEdit_3->sizePolicy().hasHeightForWidth());
@@ -254,18 +241,29 @@ public:
 
         gridLayout_3->addWidget(lineEdit_10, 3, 1, 1, 1);
 
-        lineEdit_4 = new QLineEdit(centralWidget);
-        lineEdit_4->setObjectName(QStringLiteral("lineEdit_4"));
-        sizePolicy.setHeightForWidth(lineEdit_4->sizePolicy().hasHeightForWidth());
-        lineEdit_4->setSizePolicy(sizePolicy);
-        lineEdit_4->setFocusPolicy(Qt::NoFocus);
-        lineEdit_4->setReadOnly(true);
+        lineEdit_11 = new QLineEdit(centralWidget);
+        lineEdit_11->setObjectName(QStringLiteral("lineEdit_11"));
 
-        gridLayout_3->addWidget(lineEdit_4, 13, 1, 1, 1);
+        gridLayout_3->addWidget(lineEdit_11, 12, 1, 1, 1);
 
-        verticalSpacer_4 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+        label_10 = new QLabel(centralWidget);
+        label_10->setObjectName(QStringLiteral("label_10"));
 
-        gridLayout_3->addItem(verticalSpacer_4, 11, 1, 1, 1);
+        gridLayout_3->addWidget(label_10, 12, 0, 1, 1);
+
+        lineEdit_2 = new QLineEdit(centralWidget);
+        lineEdit_2->setObjectName(QStringLiteral("lineEdit_2"));
+        sizePolicy.setHeightForWidth(lineEdit_2->sizePolicy().hasHeightForWidth());
+        lineEdit_2->setSizePolicy(sizePolicy);
+        lineEdit_2->setFocusPolicy(Qt::NoFocus);
+        lineEdit_2->setReadOnly(true);
+
+        gridLayout_3->addWidget(lineEdit_2, 7, 1, 1, 1);
+
+        label_4 = new QLabel(centralWidget);
+        label_4->setObjectName(QStringLiteral("label_4"));
+
+        gridLayout_3->addWidget(label_4, 0, 0, 1, 1);
 
         label_7 = new QLabel(centralWidget);
         label_7->setObjectName(QStringLiteral("label_7"));
@@ -276,6 +274,48 @@ public:
         label_8->setObjectName(QStringLiteral("label_8"));
 
         gridLayout_3->addWidget(label_8, 9, 0, 1, 1);
+
+        verticalSpacer_3 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+        gridLayout_3->addItem(verticalSpacer_3, 5, 1, 1, 1);
+
+        pushButton = new QPushButton(centralWidget);
+        pushButton->setObjectName(QStringLiteral("pushButton"));
+        sizePolicy.setHeightForWidth(pushButton->sizePolicy().hasHeightForWidth());
+        pushButton->setSizePolicy(sizePolicy);
+        pushButton->setMinimumSize(QSize(162, 0));
+
+        gridLayout_3->addWidget(pushButton, 14, 1, 1, 1);
+
+        lineEdit_8 = new QLineEdit(centralWidget);
+        lineEdit_8->setObjectName(QStringLiteral("lineEdit_8"));
+
+        gridLayout_3->addWidget(lineEdit_8, 6, 1, 1, 1);
+
+        label_3 = new QLabel(centralWidget);
+        label_3->setObjectName(QStringLiteral("label_3"));
+
+        gridLayout_3->addWidget(label_3, 13, 0, 1, 1);
+
+        lineEdit_7 = new QLineEdit(centralWidget);
+        lineEdit_7->setObjectName(QStringLiteral("lineEdit_7"));
+
+        gridLayout_3->addWidget(lineEdit_7, 4, 1, 1, 1);
+
+        label_5 = new QLabel(centralWidget);
+        label_5->setObjectName(QStringLiteral("label_5"));
+
+        gridLayout_3->addWidget(label_5, 1, 0, 1, 1);
+
+        label_9 = new QLabel(centralWidget);
+        label_9->setObjectName(QStringLiteral("label_9"));
+
+        gridLayout_3->addWidget(label_9, 3, 0, 1, 1);
+
+        label_2 = new QLabel(centralWidget);
+        label_2->setObjectName(QStringLiteral("label_2"));
+
+        gridLayout_3->addWidget(label_2, 10, 0, 1, 1);
 
         label = new QLabel(centralWidget);
         label->setObjectName(QStringLiteral("label"));
@@ -292,37 +332,10 @@ public:
 
         gridLayout_3->addWidget(lineEdit_9, 9, 1, 1, 1);
 
-        label_9 = new QLabel(centralWidget);
-        label_9->setObjectName(QStringLiteral("label_9"));
+        pushButton_10 = new QPushButton(centralWidget);
+        pushButton_10->setObjectName(QStringLiteral("pushButton_10"));
 
-        gridLayout_3->addWidget(label_9, 3, 0, 1, 1);
-
-        label_2 = new QLabel(centralWidget);
-        label_2->setObjectName(QStringLiteral("label_2"));
-
-        gridLayout_3->addWidget(label_2, 10, 0, 1, 1);
-
-        lineEdit_7 = new QLineEdit(centralWidget);
-        lineEdit_7->setObjectName(QStringLiteral("lineEdit_7"));
-
-        gridLayout_3->addWidget(lineEdit_7, 4, 1, 1, 1);
-
-        label_5 = new QLabel(centralWidget);
-        label_5->setObjectName(QStringLiteral("label_5"));
-
-        gridLayout_3->addWidget(label_5, 1, 0, 1, 1);
-
-        verticalSpacer_3 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
-
-        gridLayout_3->addItem(verticalSpacer_3, 5, 1, 1, 1);
-
-        pushButton = new QPushButton(centralWidget);
-        pushButton->setObjectName(QStringLiteral("pushButton"));
-        sizePolicy.setHeightForWidth(pushButton->sizePolicy().hasHeightForWidth());
-        pushButton->setSizePolicy(sizePolicy);
-        pushButton->setMinimumSize(QSize(162, 0));
-
-        gridLayout_3->addWidget(pushButton, 14, 1, 1, 1);
+        gridLayout_3->addWidget(pushButton_10, 15, 1, 1, 1);
 
 
         verticalLayout_2->addLayout(gridLayout_3);
@@ -351,17 +364,18 @@ public:
         pushButton_4->setText(QApplication::translate("MainWindow", "Stop", Q_NULLPTR));
         pushButton_8->setText(QApplication::translate("MainWindow", "Reset robot", Q_NULLPTR));
         pushButton_7->setText(QApplication::translate("MainWindow", "Reset Laser", Q_NULLPTR));
-        label_4->setText(QApplication::translate("MainWindow", "enc left", Q_NULLPTR));
         label_10->setText(QApplication::translate("MainWindow", "Rot*:", Q_NULLPTR));
-        label_3->setText(QApplication::translate("MainWindow", "Rot:", Q_NULLPTR));
+        label_4->setText(QApplication::translate("MainWindow", "enc left", Q_NULLPTR));
         label_7->setText(QApplication::translate("MainWindow", "X*:", Q_NULLPTR));
         label_8->setText(QApplication::translate("MainWindow", "Y*:", Q_NULLPTR));
-        label->setText(QApplication::translate("MainWindow", "X:", Q_NULLPTR));
-        label_6->setText(QApplication::translate("MainWindow", "R speed:", Q_NULLPTR));
+        pushButton->setText(QApplication::translate("MainWindow", "SET REQUIRED", Q_NULLPTR));
+        label_3->setText(QApplication::translate("MainWindow", "Rot:", Q_NULLPTR));
+        label_5->setText(QApplication::translate("MainWindow", "enc right", Q_NULLPTR));
         label_9->setText(QApplication::translate("MainWindow", "R speed*:", Q_NULLPTR));
         label_2->setText(QApplication::translate("MainWindow", "Y:", Q_NULLPTR));
-        label_5->setText(QApplication::translate("MainWindow", "enc right", Q_NULLPTR));
-        pushButton->setText(QApplication::translate("MainWindow", "SET REQUIRED", Q_NULLPTR));
+        label->setText(QApplication::translate("MainWindow", "X:", Q_NULLPTR));
+        label_6->setText(QApplication::translate("MainWindow", "R speed:", Q_NULLPTR));
+        pushButton_10->setText(QApplication::translate("MainWindow", "ADD XY TO QUEUE ", Q_NULLPTR));
     } // retranslateUi
 
 };
