@@ -130,10 +130,8 @@ void MainWindow::processThisRobot()
     ///Nova funkcia na polohovanie uhla
     if(robotdata.robotRotated && datacounter % 5 == 0)
     {
-      getPossiton();
+      getPossition();
     }
-
-
 
     processLocalization();
 
@@ -257,6 +255,7 @@ void MainWindow::on_pushButton_clicked()   //set req. values
     if(robotdata.robotReqAngle < 0)
         robotdata.robotReqAngle += 360;
     cout<<"req uhol natocenia "<<robotdata.robotReqAngle<<endl;
+
     robotdata.robotRotated=false;
 }
 
@@ -381,7 +380,7 @@ void MainWindow::robotprocess()
     }
 }
 
-
+/*
 //Funkcia nastavenie rychlosti po S-krivke
 void MainWindow::setSpeed()
 {
@@ -455,22 +454,7 @@ void MainWindow::setAngle(bool clockwise)
 
         std::cout<<"required speed regulator: "<<reqRotSpeed<<endl;
 
-        /*
-        if (reqRotSpeed > robotdata.robotReqRotSpeed){
 
-            if (robotdata.clockWise)
-                robotdata.robotReqRotSpeed += step;
-            else
-                robotdata.robotReqRotSpeed -= step;
-        }
-        else{
-
-            if (!robotdata.clockWise)
-                robotdata.robotReqRotSpeed=reqRotSpeed;
-            robotdata.robotReqRotSpeed += step;
-            else
-            robotdata.robotReqRotSpeed -= step;
-        }*/
         //rozbehni po rampe
         if (abs(reqRotSpeed) > abs(robotdata.robotReqRotSpeed)){
 
@@ -495,9 +479,9 @@ void MainWindow::setAngle(bool clockwise)
 
     std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}}
-
+*/
 //funkcia na polohovanie
-void MainWindow::getPossiton()
+void MainWindow::getPossition()
 {
     double deltaX=robotdata.robotReqX-robotdata.robotX;
     double deltaY=robotdata.robotReqY-robotdata.robotY;
@@ -525,7 +509,8 @@ void MainWindow::getPossiton()
         robotdata.robotRadius=r;
 
         //rozbeh po rampe/potom reguluj
-        if(v >= 50 && robotdata.robotSpeed < 50)
+        //if(v >= 50 && robotdata.robotSpeed < 50)
+        if(robotdata.robotSpeed < v)
             robotdata.robotSpeed += 5;
         else
             robotdata.robotSpeed = v;
@@ -540,6 +525,8 @@ void MainWindow::getPossiton()
     {
         robotdata.robotSpeed=0;
         robotdata.robotRadius=0;
+        //dosiahol si a nastav novu
+        // rotated = false
         //nova ziadana hodnota polohy,
     }
 

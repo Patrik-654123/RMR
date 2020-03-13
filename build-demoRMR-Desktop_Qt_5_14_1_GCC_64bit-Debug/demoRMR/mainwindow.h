@@ -40,18 +40,9 @@ public:
     void setRampSpeed();
     void setAngle(bool clockwise);
     void setAngle();
-    void getPossiton();
+    void getPossition();
 
-    /*
-    //nase vlakno
-    pthread_t speedThreadHandle; // handle na vlakno
-    int speedThreadID;  // id vlakna
-    static void *setSpeedVlakno(void *param)
-    {
-        ((MainWindow*)param)->setSpeed();
-        return 0;
-    }
-    */
+
 
 
     pthread_t robotthreadHandle; // handle na vlakno
