@@ -123,12 +123,11 @@ void MainWindow::processThisRobot()
     ///Nova funkcia na polohovanie uhla
     if(!robotdata.robotRotated && datacounter % 5 == 0)
     {
-      setAngle();
+       setAngle();
     }
 
-
     ///Nova funkcia na polohovanie uhla
-    if(robotdata.robotRotated && datacounter % 5 == 0)
+    if(robotdata.robotRotated && datacounter % 15 == 0)
     {
       getPossition();
     }
@@ -137,7 +136,7 @@ void MainWindow::processThisRobot()
 
 
     ///tu mozete robit s datami z robota
-    /// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
+    ///ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
     ///teraz tu len vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
     if(datacounter%5==0)
     {
@@ -223,7 +222,7 @@ void MainWindow::on_pushButton_6_clicked() //left
 
 void MainWindow::on_pushButton_5_clicked() //right
 {
-   std::vector<unsigned char> mess=robot.setArcSpeed(300,-30000);
+   std::vector<unsigned char> mess=robot.setArcSpeed(100,-100);
    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
    // std::vector<unsigned char> mess=robot.setRotationSpeed(-M_PI/2);
    // if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
@@ -509,11 +508,11 @@ void MainWindow::getPossition()
         double kBeta=-150;//-100;
 
         double Ro=sqrt(pow(deltaX,2.0)+pow(deltaY,2.0));
-        double Alfa=-robotdata.robotFi+atan2(deltaY,deltaX);
+        double Alfa=-robotdata.robotFi+atan2(deltaX,deltaY); // pozriet poradie delta
         double Beta=-robotdata.robotFi-Alfa;
-        //std::cout<<"Ro:"<<Ro<<endl;
-        //std::cout<<"Alfa:"<<Alfa<<endl;
-        //std::cout<<"Beta:"<<Beta<<endl;
+        std::cout<<"Ro:"<<Ro*(180/PI)<<endl;
+        std::cout<<"Alfa:"<<Alfa*(180/PI)<<endl;
+        std::cout<<"Beta:"<<Beta*(180/PI)<<endl;
 
         //akcny zasah rychlost/polomer
         double v=kRo*Ro;
@@ -532,7 +531,7 @@ void MainWindow::getPossition()
         if(robotdata.robotSpeed >= 300)
             robotdata.robotSpeed = 300;
 
-        if(robotdata.robotRadius > 30000)
+        if(abs(robotdata.robotRadius) > 30000)
             robotdata.robotRadius=(robotdata.robotRadius > 0) ? 30000 : -30000;
     }else
     {
