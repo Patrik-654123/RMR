@@ -147,8 +147,8 @@ typedef struct
     double robotRadius;
 
     //pozition queue
-
     queue<pair<double,double>> positionQ;
+
 
     TExtraRequestData extraInfo;
 }TKobukiData;
@@ -167,9 +167,6 @@ public:
      virtual ~CKobuki() {
 
     };
-
-
-
 
 
     std::vector<unsigned char> setLed(int led1 = 0, int led2 = 0); //led1 zelena/cervena 2/1, //led2 zelena/cervena 2/1

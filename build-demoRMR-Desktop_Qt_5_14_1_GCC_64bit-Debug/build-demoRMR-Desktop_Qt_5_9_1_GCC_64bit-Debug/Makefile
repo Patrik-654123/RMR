@@ -53,11 +53,15 @@ OBJECTS_DIR   = ../demoRMR/build/
 SOURCES       = ../demoRMR/main.cpp \
 		../demoRMR/mainwindow.cpp \
 		../demoRMR/rplidar.cpp \
-		../demoRMR/CKobuki.cpp ../demoRMR/build/moc_mainwindow.cpp
+		../demoRMR/CKobuki.cpp \
+		../demoRMR/KobukiTxtData.cpp \
+		../demoRMR/rplidarTxt.cpp ../demoRMR/build/moc_mainwindow.cpp
 OBJECTS       = ../demoRMR/build/main.o \
 		../demoRMR/build/mainwindow.o \
 		../demoRMR/build/rplidar.o \
 		../demoRMR/build/CKobuki.o \
+		../demoRMR/build/KobukiTxtData.o \
+		../demoRMR/build/rplidarTxt.o \
 		../demoRMR/build/moc_mainwindow.o
 DIST          = ../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/common/unix.conf \
@@ -240,10 +244,14 @@ DIST          = ../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/features/lex.prf \
 		../demoRMR/demoRMR.pro ../demoRMR/mainwindow.h \
 		../demoRMR/rplidar.h \
-		../demoRMR/CKobuki.h ../demoRMR/main.cpp \
+		../demoRMR/CKobuki.h \
+		../demoRMR/KobukiTxtData.h \
+		../demoRMR/rplidarTxt.h ../demoRMR/main.cpp \
 		../demoRMR/mainwindow.cpp \
 		../demoRMR/rplidar.cpp \
-		../demoRMR/CKobuki.cpp
+		../demoRMR/CKobuki.cpp \
+		../demoRMR/KobukiTxtData.cpp \
+		../demoRMR/rplidarTxt.cpp
 QMAKE_TARGET  = demoRMR
 DESTDIR       = 
 TARGET        = demoRMR
@@ -637,8 +645,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents ../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../demoRMR/mainwindow.h ../demoRMR/rplidar.h ../demoRMR/CKobuki.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../demoRMR/main.cpp ../demoRMR/mainwindow.cpp ../demoRMR/rplidar.cpp ../demoRMR/CKobuki.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../demoRMR/mainwindow.h ../demoRMR/rplidar.h ../demoRMR/CKobuki.h ../demoRMR/KobukiTxtData.h ../demoRMR/rplidarTxt.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../demoRMR/main.cpp ../demoRMR/mainwindow.cpp ../demoRMR/rplidar.cpp ../demoRMR/CKobuki.cpp ../demoRMR/KobukiTxtData.cpp ../demoRMR/rplidarTxt.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../demoRMR/mainwindow.ui $(DISTDIR)/
 
 
@@ -1089,6 +1097,12 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_ui
 
 ../demoRMR/build/CKobuki.o: ../demoRMR/CKobuki.cpp ../demoRMR/CKobuki.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/CKobuki.o ../demoRMR/CKobuki.cpp
+
+../demoRMR/build/KobukiTxtData.o: ../demoRMR/KobukiTxtData.cpp ../demoRMR/KobukiTxtData.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/KobukiTxtData.o ../demoRMR/KobukiTxtData.cpp
+
+../demoRMR/build/rplidarTxt.o: ../demoRMR/rplidarTxt.cpp ../demoRMR/rplidarTxt.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/rplidarTxt.o ../demoRMR/rplidarTxt.cpp
 
 ../demoRMR/build/moc_mainwindow.o: ../demoRMR/build/moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/moc_mainwindow.o ../demoRMR/build/moc_mainwindow.cpp

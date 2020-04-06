@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
 #include <QPainter>
 #include <iostream>
 #include <math.h>
@@ -20,8 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ///tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    //ipaddress="192.168.1.14";
-    ipaddress = "127.0.0.1";  //simulator ip
+    ipaddress="192.168.1.14";
+    //ipaddress = "127.0.0.1";  //simulator ip
 
     ui->setupUi(this);
     datacounter=0;
@@ -85,10 +86,9 @@ void MainWindow::processThisRobot()
         robotdata.robotOn=true;
         std::cout<<"encoder values (L,R): "<<robotdata.offsetL<<' '<<  robotdata.offsetR<<endl;
         //other starting values
-
-        robotdata.robotX=1;
+        robotdata.robotX=0;
         robotdata.robotReqX=1;
-        robotdata.robotY=1;
+        robotdata.robotY=0;
         robotdata.robotReqY=1;
 
         robotdata.robotReqSpeed=0;
@@ -100,15 +100,15 @@ void MainWindow::processThisRobot()
         robotdata.robotRadius=0;
     }
 
+    /*
     if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5==0)
     {
         //setSpeed();
         //setRampSpeed();
     }
-
-
-    //Treba v kazdom cykle?? / Treba dat podienku necitlivosti, premenu ktora urci ze robot je natoceny
-/*   if(robotdata.robotFi != robotdata.robotReqAngle )
+    */
+    /*
+    if(robotdata.robotFi != robotdata.robotReqAngle )
     {
         if(!robotdata.clockWiseLock)
         {
@@ -118,20 +118,23 @@ void MainWindow::processThisRobot()
 
         setAngle(robotdata.clockWise);
     }
-*/
-
+    */
+    /*
     ///Nova funkcia na polohovanie uhla
     if(!robotdata.robotRotated && datacounter % 5 == 0)
     {
        setAngle();
     }
-
-    ///Nova funkcia na polohovanie uhla
-    if(robotdata.robotRotated && datacounter % 15 == 0)
+    */
+    /*
+    ///Funkcia prihodu na poziciu
+    if(robotdata.robotRotated && datacounter % 10 == 0)
     {
       getPossition();
     }
+    */
 
+    //Fukncia lokalizacie
     processLocalization();
 
 
@@ -140,7 +143,6 @@ void MainWindow::processThisRobot()
     ///teraz tu len vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
     if(datacounter%5==0)
     {
-
     ///ak nastavite hodnoty priamo do prvkov okna,ako je to na tychto zakomentovanych riadkoch tak sa moze stat ze vam program padne
      ui->lineEdit_2->setText(QString::number(robotdata.robotX));
      ui->lineEdit_3->setText(QString::number(robotdata.robotY));
@@ -148,7 +150,7 @@ void MainWindow::processThisRobot()
      ui->lineEdit_5->setText(QString::number(robotdata.EncoderLeft));
      ui->lineEdit_6->setText(QString::number(robotdata.EncoderRight));
      ui->lineEdit_7->setText(QString::number(robotdata.robotSpeed));
- //  ui->lineEdit_10->setText(QString::number(robotdata.robotReqSpeed));
+     ui->lineEdit_10->setText(QString::number(robotdata.robotReqSpeed));
      ui->lineEdit_11->setText(QString::number(robotdata.robotReqAngle));
 
         /// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
@@ -171,9 +173,7 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
     updateLaserPicture=1;
     mutex.unlock();//skoncil som
     update();//tento prikaz je vlastne signal, ktory prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
-
 }
-
 
 void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 {
@@ -188,24 +188,21 @@ void MainWindow::on_pushButton_9_clicked() //start button
     //tu sa nastartuju vlakna ktore citaju data z lidaru a robota
      laserthreadID=pthread_create(&laserthreadHandle,NULL,&laserUDPVlakno,(void *)this);
      robotthreadID=pthread_create(&robotthreadHandle,NULL,&robotUDPVlakno,(void *)this);
-     //vytvorenie naseho vlakna
-     //speedThreadID=pthread_create(&speedThreadHandle,NULL,&setSpeedVlakno,(void *)this);
 
-///toto je prepojenie signalu o zmene udajov, na signal
+      ///toto je prepojenie signalu o zmene udajov, na signal
       connect(this,SIGNAL(uiValuesChanged(double,double,double)),this,SLOT(setUiValues(double,double,double)));
 }
 
 void MainWindow::on_pushButton_2_clicked() //forward
 {
-
     robotdata.robotReqSpeed=300;
     robotdata.speedSample=0;
     //pohyb dopredu
     //std::vector<unsigned char> mess=robot.setTranslationSpeed(300);
 
-///ak by ste chceli miesto pohybu dopredu napriklad pohyb po kruznici s polomerom 1 meter zavolali by ste funkciu takto:
-/// std::vector<unsigned char> mess=robot.setArcSpeed(100,1000);
-//if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
+    ///ak by ste chceli miesto pohybu dopredu napriklad pohyb po kruznici s polomerom 1 meter zavolali by ste funkciu takto:
+    /// std::vector<unsigned char> mess=robot.setArcSpeed(100,1000);
+    //if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
 void MainWindow::on_pushButton_3_clicked() //back
@@ -243,8 +240,6 @@ void MainWindow::on_pushButton_clicked()   //set req. values
     robotdata.robotReqSpeed=ui->lineEdit_10->text().toShort();
     robotdata.robotReqAngle=ui->lineEdit_11->text().toDouble();
 
-
-
     //odomkunie zamku na prepocet otocenia,
     robotdata.clockWiseLock=false;
     robotdata.robotReqRotSpeed=0;
@@ -258,7 +253,6 @@ void MainWindow::on_pushButton_clicked()   //set req. values
         robotdata.robotReqAngle += 360;
 
     robotdata.robotRotated=false;
-
 }
 
 void MainWindow::on_pushButton_10_clicked() //ADD XY to queue
@@ -275,6 +269,35 @@ void MainWindow::on_pushButton_10_clicked() //ADD XY to queue
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
 void MainWindow::laserprocess()
 {
+    //Citanie dat lidaru, z textoveho dokumentu
+    lidarTxtData.connectToFile("lidardata.txt");
+    LaserMeasurementTxt measureTxt;
+    LaserMeasurement measure_tmp;
+    int j=1;
+    while(1)
+    {
+     measureTxt=lidarTxtData.getMeasurementFromFile();
+     std::cout<<j<<".  number of scans "<<measureTxt.numberOfScans<<endl;
+     j++;
+        if(measureTxt.numberOfScans==-1)
+        {
+         break;
+        }
+
+        for (int i=0;i<sizeof(measureTxt.Data)/sizeof(measureTxt.Data[1]);i++)
+        {
+         measure_tmp.Data[i]=measureTxt.Data[i];
+        }
+
+     measure_tmp.numberOfScans=measureTxt.numberOfScans;
+
+     processThisLidar(measure_tmp);
+     usleep(1000000);
+    }
+    std::cout<<"read lidar_data finished"<<endl;
+    //koniec citania dat lidaru z dokumentu
+
+
     // Initialize Winsock
     las_slen = sizeof(las_si_other);
     if ((las_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
@@ -304,20 +327,17 @@ void MainWindow::laserprocess()
 
     }
 
-
     LaserMeasurement measure;
     while(1)
     {
 
         if ((las_recv_len = recvfrom(las_s, (char*)&measure.Data, sizeof(LaserData)*1000, 0, (struct sockaddr *) &las_si_other,&las_slen)) == -1)
         {
-
             continue;
         }
         measure.numberOfScans=las_recv_len/sizeof(LaserData);
         //tu mame data..zavolame si funkciu
         processThisLidar(measure);
-
 ///ako som vravel,toto vas nemusi zaujimat
     }
 }
@@ -326,9 +346,30 @@ void MainWindow::laserprocess()
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z robota (UDP komunikacia)
 void MainWindow::robotprocess()
 {
-    if ((rob_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-    {
 
+    //citanie dat robota z textoveho dokumentu
+    robotTxt.openFile("robotdata.txt");
+    while(1)
+    {
+     robotTxtData=robotTxt.getNewData();
+
+        if(robotTxtData.timestamp==0){
+         break;
+        }
+     robotdata.EncoderLeft=robotTxtData.encoderleft;
+     robotdata.EncoderRight=robotTxtData.encoderright;
+     robotdata.GyroAngle=robotTxtData.gyroangle;
+
+     processThisRobot();
+
+     usleep(5000);
+    }
+    std::cout<<"read robot_data finished"<<endl;
+    //textovy dokument precitany
+
+
+    if ((rob_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    {        
     }
 
     char rob_broadcastene=1;
@@ -359,21 +400,12 @@ void MainWindow::robotprocess()
     }
    unsigned char buff[50000];
 
- //ZAKOMENTOVAT v reale !!..................................................
- //while(1)
- // {
- //     processThisRobot();
- //    usleep(100000);
- // }
- //...........................................................................
-
 
     while(1)
     {
         memset(buff,0,50000*sizeof(char));
         if ((rob_recv_len = recvfrom(rob_s, (char*)&buff, sizeof(char)*50000, 0, (struct sockaddr *) &rob_si_other, &rob_slen)) == -1)
         {
-
             continue;
         }
         //https://i.pinimg.com/236x/1b/91/34/1b9134e6a5d2ea2e5447651686f60520--lol-funny-funny-shit.jpg
@@ -382,7 +414,6 @@ void MainWindow::robotprocess()
         //     memcpy(&sens,buff,sizeof(sens));
         //      struct timespec t;
         //      clock_gettime(CLOCK_REALTIME,&t);
-
 
         int returnval=robot.fillData(robotdata,(unsigned char*)buff);
         if(returnval==0)
@@ -500,7 +531,7 @@ void MainWindow::getPossition()
     std::cout<<"deltaX="<<deltaX<<endl;
     std::cout<<"deltaY="<<deltaY<<endl;
 
-    if(abs(deltaX) > 0.2 || abs(deltaY) > 0.2)
+    if(abs(deltaX) > 0.1 || abs(deltaY) > 0.1)
     {
         //Patametre linearneho regulatora
         double kRo=300;//100;
@@ -510,6 +541,7 @@ void MainWindow::getPossition()
         double Ro=sqrt(pow(deltaX,2.0)+pow(deltaY,2.0));
         double Alfa=-robotdata.robotFi+atan2(deltaX,deltaY); // pozriet poradie delta
         double Beta=-robotdata.robotFi-Alfa;
+
         std::cout<<"Ro:"<<Ro*(180/PI)<<endl;
         std::cout<<"Alfa:"<<Alfa*(180/PI)<<endl;
         std::cout<<"Beta:"<<Beta*(180/PI)<<endl;
@@ -598,7 +630,6 @@ void MainWindow::setAngle()
     std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
-
 //funkcia lokalizacie
 void MainWindow::processLocalization()
 {
@@ -612,12 +643,10 @@ void MainWindow::processLocalization()
         if(robotdata.EncoderLeft<robotdata.offsetL)
         {
             ll=(robot.getTickConst())*(robotdata.EncoderLeft+(numeric_limits<unsigned short>::max()-robotdata.offsetL));
-            std::cout<<"lavy pretiekol"<<endl;
         }
         else
         {
             ll=-1*((robot.getTickConst())*((numeric_limits<unsigned short>::max()-robotdata.EncoderLeft)+robotdata.offsetL));
-            std::cout<<"lavy podtiekol"<<endl;
         }
     }
     else
@@ -630,11 +659,9 @@ void MainWindow::processLocalization()
         if((robotdata.EncoderRight<robotdata.offsetR))
         {
             lr=(robot.getTickConst())*(robotdata.EncoderRight+(numeric_limits<unsigned short>::max()-robotdata.offsetR));
-            std::cout<<"pravy pretiekol"<<endl;
         }else
         {
             lr=-1*(robot.getTickConst())*((numeric_limits<unsigned short>::max()-robotdata.EncoderRight)+robotdata.offsetR);
-            std::cout<<"pravy podtiekol"<<endl;
         }
     }else
     {

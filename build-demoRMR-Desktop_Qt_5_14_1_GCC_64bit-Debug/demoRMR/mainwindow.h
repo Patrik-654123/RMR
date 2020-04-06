@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
+#include<QMainWindow>
 #include<QMutex>
 #include<iostream>
 #include<arpa/inet.h>
@@ -14,6 +14,10 @@
 #include<vector>
 #include "CKobuki.h"
 #include "rplidar.h"
+
+#include "rplidarTxt.h"
+#include "KobukiTxtData.h"
+
 
 #define speedStep  0.02
 
@@ -98,6 +102,14 @@ private:
      std::string ipaddress;
      CKobuki robot;
      TKobukiData robotdata;
+
+     //PATO
+     CKobukiTxtData robotTxt;
+     KobukiData robotTxtData;
+
+     rplidarTxt lidarTxtData;
+     LaserMeasurementTxt copyOfLaserTxtData;
+
      int datacounter;
 public slots:
      void setUiValues(double robotX,double robotY,double robotFi);

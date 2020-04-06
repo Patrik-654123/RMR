@@ -23,10 +23,14 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     rplidar.cpp \
-    CKobuki.cpp
+    CKobuki.cpp \
+    KobukiTxtData.cpp \
+    rplidarTxt.cpp
 
 HEADERS  += mainwindow.h \
     rplidar.h \
-    CKobuki.h
+    CKobuki.h \
+    KobukiTxtData.h \
+    rplidarTxt.h
 
 FORMS    += mainwindow.ui
