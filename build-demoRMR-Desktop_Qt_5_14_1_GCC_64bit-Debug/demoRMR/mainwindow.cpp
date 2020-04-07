@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <cmath>
 #include <bits/stdc++.h>
+#include <iostream>
+#include <fstream>
 
 ///TOTO JE DEMO PROGRAM... NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
 /// NASLEDNE V POLOZKE Projects SKONTROLUJ CI JE VYPNUTY shadow build...
@@ -47,8 +49,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
     rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
 
 
-
     painter.drawRect(rect);//vykreslite stvorec
+
     if(updateLaserPicture==1)
     {
 
@@ -66,8 +68,15 @@ void MainWindow::paintEvent(QPaintEvent *event)
             int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x();
             int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y();
             if(rect.contains(xp,yp))
-                painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2px
+                painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2p
+
         }
+
+       // painter.drawRect(rect_map);
+       // painter.drawEllipse(QPoint(100,100),5,5);
+
+
+
         mutex.unlock();//unlock..skoncil som
     }
 }
@@ -84,10 +93,11 @@ void MainWindow::processThisRobot()
         robotdata.offsetL=robotdata.EncoderLeft;
         robotdata.robotOn=true;
         std::cout<<"encoder values (L,R): "<<robotdata.offsetL<<' '<<  robotdata.offsetR<<endl;
+
         //other starting values
-        robotdata.robotX=0;
+        robotdata.robotX=6;
         robotdata.robotReqX=1;
-        robotdata.robotY=0;
+        robotdata.robotY=6;
         robotdata.robotReqY=1;
 
         robotdata.robotReqSpeed=0;
@@ -169,10 +179,34 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
+    double x_gi,y_gi;
+
+    for (int i=0;i<laserData.numberOfScans;i++)
+    {
+        x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(-rfi+(laserData.Data[i].scanAngle)*(PI/180));
+        y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(-rfi+(laserData.Data[i].scanAngle)*(PI/180));
+
+        x_gi=x_gi/100;
+        y_gi=y_gi/100;
+
+        if(x_gi>119)
+            x_gi=119;
+        if(y_gi>119)
+            y_gi=119;
+
+        std::cout<<i<<" x "<<x_gi<<" y "<<y_gi<<endl;
+
+        map[(int)(x_gi)][(int)(y_gi)]=1;
+    }
+
+    map[(int)(rx*10)][(int)(ry*10)]=2;
+
     updateLaserPicture=1;
     mutex.unlock();//skoncil som
     update();//tento prikaz je vlastne signal, ktory prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
 }
+
+
 
 void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 {
@@ -288,7 +322,7 @@ void MainWindow::laserprocess()
         {
             if(measureTxt.timestamp <= ((clock()-t_ofset_laser)/100))
             {
-                std::cout<<"LASER thread stamp "<<(clock()-t_ofset_laser)/100 <<" DATA timestamp "<<measureTxt.timestamp<<endl;
+                //std::cout<<"LASER thread stamp "<<(clock()-t_ofset_laser)/100 <<" DATA timestamp "<<measureTxt.timestamp<<endl;
                 for (int i=0;i<sizeof(measureTxt.Data)/sizeof(measureTxt.Data[1]);i++)
                 {
                     measure_tmp.Data[i]=measureTxt.Data[i];
@@ -309,6 +343,19 @@ void MainWindow::laserprocess()
     }
     //koniec citania dat lidaru z dokumentu
 
+    ofstream myfile ("mapa.txt");
+    if (myfile.is_open())
+    {
+        for(int i = 0;i<120; i++)
+        {
+            for(int j = 0; j<120;j++)
+            {
+                myfile << map[j][i];
+            }
+            myfile<<";"<<"\n";
+        }
+        myfile.close();
+    }
 
     // Initialize Winsock
     las_slen = sizeof(las_si_other);
@@ -372,7 +419,7 @@ void MainWindow::robotprocess()
         {
             if(robotTxtData.timestamp <= ((clock()-t_ofset_robot)/100))
             {
-                std::cout<<"ROBOT thread stamp "<<(clock()-t_ofset_robot)/100 <<" DATA timestamp "<<robotTxtData.timestamp<<endl;
+               // std::cout<<"ROBOT thread stamp "<<(clock()-t_ofset_robot)/100 <<" DATA timestamp "<<robotTxtData.timestamp<<endl;
                 robotdata.EncoderLeft=robotTxtData.encoderleft;
                 robotdata.EncoderRight=robotTxtData.encoderright;
                 robotdata.GyroAngle=robotTxtData.gyroangle;
@@ -714,5 +761,13 @@ void MainWindow::processLocalization()
     //Ulozenie hodnot uhlov
     robotdata.robotFi=Fi_k1;
     robotdata.robotFiDeg=robotdata.robotFi*(180/PI);
+
+    //Ulozenie do pomocnych premenych mapy
+    mutex.lock();
+    rx=robotdata.robotX;
+    ry=robotdata.robotY;
+    rfi=robotdata.robotFi;
+    mutex.unlock();
+
 }
 
