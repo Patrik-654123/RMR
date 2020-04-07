@@ -6,7 +6,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <cmath>
-
+#include <bits/stdc++.h>
 
 ///TOTO JE DEMO PROGRAM... NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
 /// NASLEDNE V POLOZKE Projects SKONTROLUJ CI JE VYPNUTY shadow build...
@@ -59,7 +59,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
         ///teraz sa tu kreslia udaje z lidaru. ak chcete, prerobte
         for(int k=0;k<copyOfLaserData.numberOfScans;k++)
         {
-
             //tu sa rata z polarnych suradnic na kartezske, a zaroven sa upravuje mierka aby sme sa zmestili do
             //do vyhradeneho stvorca aspon castou merania.. ale nieje to pekne, krajsie by bolo
             //keby ste nastavovali mierku tak,aby bolo v okne zobrazene cele meranie (treba najst min a max pre x a y suradnicu a podla toho to prenasobit)
@@ -184,6 +183,9 @@ void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 
 void MainWindow::on_pushButton_9_clicked() //start button
 {
+     mutex.lock();
+     t_offset=clock();
+     mutex.unlock();
 
     //tu sa nastartuju vlakna ktore citaju data z lidaru a robota
      laserthreadID=pthread_create(&laserthreadHandle,NULL,&laserUDPVlakno,(void *)this);
@@ -269,32 +271,42 @@ void MainWindow::on_pushButton_10_clicked() //ADD XY to queue
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
 void MainWindow::laserprocess()
 {
+    //casova synchronizacia
+    mutex.lock();
+    clock_t t_ofset_laser= t_offset;
+    mutex.unlock();
+
     //Citanie dat lidaru, z textoveho dokumentu
     lidarTxtData.connectToFile("lidardata.txt");
-    LaserMeasurementTxt measureTxt;
-    LaserMeasurement measure_tmp;
-    int j=1;
-    while(1)
+
+    if(lidarTxtData.fp!= NULL)
     {
-     measureTxt=lidarTxtData.getMeasurementFromFile();
-     std::cout<<j<<".  number of scans "<<measureTxt.numberOfScans<<endl;
-     j++;
-        if(measureTxt.numberOfScans==-1)
+        LaserMeasurementTxt measureTxt;
+        LaserMeasurement measure_tmp;
+        measureTxt=lidarTxtData.getMeasurementFromFile();
+        while(1)
         {
-         break;
+            if(measureTxt.timestamp <= ((clock()-t_ofset_laser)/100))
+            {
+                std::cout<<"LASER thread stamp "<<(clock()-t_ofset_laser)/100 <<" DATA timestamp "<<measureTxt.timestamp<<endl;
+                for (int i=0;i<sizeof(measureTxt.Data)/sizeof(measureTxt.Data[1]);i++)
+                {
+                    measure_tmp.Data[i]=measureTxt.Data[i];
+                }
+
+                measure_tmp.numberOfScans=measureTxt.numberOfScans;
+                processThisLidar(measure_tmp);
+
+                measureTxt=lidarTxtData.getMeasurementFromFile();
+
+                if(measureTxt.numberOfScans==-1)
+                {
+                    std::cout<<"read lidar_data finished"<<endl;
+                    break;
+                }
+            }
         }
-
-        for (int i=0;i<sizeof(measureTxt.Data)/sizeof(measureTxt.Data[1]);i++)
-        {
-         measure_tmp.Data[i]=measureTxt.Data[i];
-        }
-
-     measure_tmp.numberOfScans=measureTxt.numberOfScans;
-
-     processThisLidar(measure_tmp);
-     usleep(1000000);
     }
-    std::cout<<"read lidar_data finished"<<endl;
     //koniec citania dat lidaru z dokumentu
 
 
@@ -346,25 +358,36 @@ void MainWindow::laserprocess()
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z robota (UDP komunikacia)
 void MainWindow::robotprocess()
 {
+    //casova synchronizacia
+    mutex.lock();
+    clock_t t_ofset_robot= t_offset;
+    mutex.unlock();
 
     //citanie dat robota z textoveho dokumentu
     robotTxt.openFile("robotdata.txt");
-    while(1)
+    if (robotTxt.textfile != NULL)
     {
-     robotTxtData=robotTxt.getNewData();
+        robotTxtData=robotTxt.getNewData();
+        while(1)
+        {
+            if(robotTxtData.timestamp <= ((clock()-t_ofset_robot)/100))
+            {
+                std::cout<<"ROBOT thread stamp "<<(clock()-t_ofset_robot)/100 <<" DATA timestamp "<<robotTxtData.timestamp<<endl;
+                robotdata.EncoderLeft=robotTxtData.encoderleft;
+                robotdata.EncoderRight=robotTxtData.encoderright;
+                robotdata.GyroAngle=robotTxtData.gyroangle;
 
-        if(robotTxtData.timestamp==0){
-         break;
+                processThisRobot();
+
+                robotTxtData=robotTxt.getNewData();
+                if(robotTxtData.timestamp==0)
+                {
+                    std::cout<<"read robot_data finished"<<endl;
+                    break;
+                }
+            }
         }
-     robotdata.EncoderLeft=robotTxtData.encoderleft;
-     robotdata.EncoderRight=robotTxtData.encoderright;
-     robotdata.GyroAngle=robotTxtData.gyroangle;
-
-     processThisRobot();
-
-     usleep(5000);
     }
-    std::cout<<"read robot_data finished"<<endl;
     //textovy dokument precitany
 
 

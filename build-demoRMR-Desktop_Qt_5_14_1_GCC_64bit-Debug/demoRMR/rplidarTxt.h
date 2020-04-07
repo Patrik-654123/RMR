@@ -24,14 +24,7 @@
 #include <stdio.h>
 //#include <sys/time.h>
 #include "rplidar.h"
-/*
-typedef struct
-{
-    int scanQuality;
-    double scanAngle;
-    double scanDistance;
-}LaserDataTxt;
-*/
+
 typedef struct
 {
     int timestamp;
@@ -43,33 +36,14 @@ class rplidarTxt
 {
 public:
 
-    rplidarTxt()
-    {
-
-    }
-
-
-    virtual  ~ rplidarTxt()
-    {
-
-    }
-private:
-    //-ci bolo skontrolovane ze je vsetko ok
-
-//---veci na pracu z file. nacitanie a tak..
+    rplidarTxt(){}
+    virtual  ~ rplidarTxt(){}
 
     FILE *fp;
-public:
     //--pripoji sa na subor s ulozenym meranim...
     int connectToFile(char *filename);
     //ziska meranie z filu
     LaserMeasurementTxt getMeasurementFromFile();
-
-
-
-private:
-
-
 
 };
 

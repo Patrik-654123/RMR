@@ -109,6 +109,8 @@ private:
 
      rplidarTxt lidarTxtData;
      LaserMeasurementTxt copyOfLaserTxtData;
+     clock_t t_offset;
+
 
      int datacounter;
 public slots:
