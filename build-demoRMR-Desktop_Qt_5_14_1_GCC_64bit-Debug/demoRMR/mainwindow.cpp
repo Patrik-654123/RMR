@@ -72,11 +72,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
         }
 
-       // painter.drawRect(rect_map);
-       // painter.drawEllipse(QPoint(100,100),5,5);
-
-
-
         mutex.unlock();//unlock..skoncil som
     }
 }
@@ -179,12 +174,14 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
-    double x_gi,y_gi;
+    double x_gi,y_gi,angle;
 
     for (int i=0;i<laserData.numberOfScans;i++)
     {
-        x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(-rfi+(laserData.Data[i].scanAngle)*(PI/180));
-        y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(-rfi+(laserData.Data[i].scanAngle)*(PI/180));
+        angle=rfi-(laserData.Data[i].scanAngle*(PI/180));
+
+        x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(angle);
+        y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(angle);
 
         x_gi=x_gi/100;
         y_gi=y_gi/100;
@@ -194,7 +191,7 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
         if(y_gi>119)
             y_gi=119;
 
-        std::cout<<i<<" x "<<x_gi<<" y "<<y_gi<<endl;
+       // std::cout<<i<<" x "<<x_gi<<" y "<<y_gi<<endl;
 
         map[(int)(x_gi)][(int)(y_gi)]=1;
     }
@@ -350,12 +347,13 @@ void MainWindow::laserprocess()
         {
             for(int j = 0; j<120;j++)
             {
-                myfile << map[j][i];
+                myfile << map[i][j]<<' ';
             }
             myfile<<";"<<"\n";
         }
         myfile.close();
     }
+
 
     // Initialize Winsock
     las_slen = sizeof(las_si_other);
