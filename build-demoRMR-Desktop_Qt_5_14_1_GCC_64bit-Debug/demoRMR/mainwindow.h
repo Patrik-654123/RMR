@@ -17,6 +17,7 @@
 
 #include "rplidarTxt.h"
 #include "KobukiTxtData.h"
+#include "map_loader.h"
 
 
 #define speedStep  0.02
@@ -46,7 +47,12 @@ public:
     void setAngle();
     void getPossition();
 
-
+    //VITO uloha4
+    void getWayPoints(int* Map, int xSize, int ySize, double rx, double ry, double finX, double finY);
+    void TMapAreaToArrayMap();
+    void evaluateNeighbors(int* Map, int xSize, int ySize, queue<Point>* pointsToEvaluate, int x, int y);
+    int setDirection(int* Map, int xSize, int ySize, int x, int y, int oldDirection);
+    void expandObstacles(int xSize, int ySize);
 
 
     pthread_t robotthreadHandle; // handle na vlakno
@@ -114,6 +120,14 @@ private:
      clock_t t_offset;
      double rx,ry,rfi;
      int map[120][120]={};
+     //
+
+     //uloha 4
+     map_loader mapLoader;
+     TMapArea idealMap;
+     queue<Point> wayPoints;
+     int idealArrayMap[120][120]={};
+     int widthOfCell = 5; //cm
      //
 
      int datacounter;
