@@ -131,6 +131,7 @@ typedef struct
 
     bool clockWiseLock;
     bool clockWise;
+    bool lidarScan;
 
     unsigned short offsetR;
     unsigned short offsetL;
@@ -148,6 +149,7 @@ typedef struct
 
     //pozition queue
     queue<pair<double,double>> positionQ;
+    
 
 
     TExtraRequestData extraInfo;

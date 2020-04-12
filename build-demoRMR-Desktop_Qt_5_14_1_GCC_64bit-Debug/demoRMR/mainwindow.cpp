@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ///tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
     ipaddress="192.168.1.14";
-    //ipaddress = "127.0.0.1";  //simulator ip
+    // ipaddress = "127.0.0.1";  //simulator ip
 
     ui->setupUi(this);
     datacounter=0;
@@ -77,9 +77,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 }
 
 
-
-
-
 void MainWindow::processThisRobot()
 {
     if (!robotdata.robotOn)
@@ -90,15 +87,15 @@ void MainWindow::processThisRobot()
         std::cout<<"encoder values (L,R): "<<robotdata.offsetL<<' '<<  robotdata.offsetR<<endl;
 
         //other starting values
-        robotdata.robotX=6;
+        robotdata.robotX=1;
         robotdata.robotReqX=1;
-        robotdata.robotY=6;
+        robotdata.robotY=1;
         robotdata.robotReqY=1;
 
         robotdata.robotReqSpeed=0;
         robotdata.robotSpeed=0;
         robotdata.speedSample=0;
-        robotdata.robotFi=0;
+        robotdata.robotFi=(90*PI)/180; //Pri datach
         robotdata.robotFiDeg=robotdata.robotFi*(180/PI);
         robotdata.robotReqAngle=0;
         robotdata.robotRadius=0;
@@ -174,29 +171,29 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
-    double x_gi,y_gi,angle;
+    //if(robotdata.lidarScan)
+    //{
+        double x_gi,y_gi,angle;
 
-    for (int i=0;i<laserData.numberOfScans;i++)
-    {
-        angle=rfi-(laserData.Data[i].scanAngle*(PI/180));
+        for (int i=0;i<laserData.numberOfScans;i++)
+        {
+            angle=rfi-(laserData.Data[i].scanAngle*(PI/180));
+            //Pri sumulatore +
+            x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(angle);
+            y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(angle);
 
-        x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(angle);
-        y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(angle);
+            x_gi=x_gi/50;
+            y_gi=y_gi/50;
 
-        x_gi=x_gi/100;
-        y_gi=y_gi/100;
+            if(x_gi>119)
+                x_gi=119;
+            if(y_gi>119)
+                y_gi=119;
 
-        if(x_gi>119)
-            x_gi=119;
-        if(y_gi>119)
-            y_gi=119;
-
-       // std::cout<<i<<" x "<<x_gi<<" y "<<y_gi<<endl;
-
-        map[(int)(x_gi)][(int)(y_gi)]=1;
-    }
-
-    map[(int)(rx*10)][(int)(ry*10)]=2;
+            map[(int)(x_gi)][(int)(y_gi)]=1;
+        }
+    //    robotdata.lidarScan=false;
+    //}
 
     updateLaserPicture=1;
     mutex.unlock();//skoncil som
@@ -228,18 +225,17 @@ void MainWindow::on_pushButton_9_clicked() //start button
 
 void MainWindow::on_pushButton_2_clicked() //forward
 {
-    robotdata.robotReqSpeed=300;
-    robotdata.speedSample=0;
     //pohyb dopredu
-    //std::vector<unsigned char> mess=robot.setTranslationSpeed(300);
+    std::vector<unsigned char> mess=robot.setTranslationSpeed(300);
 
     ///ak by ste chceli miesto pohybu dopredu napriklad pohyb po kruznici s polomerom 1 meter zavolali by ste funkciu takto:
     /// std::vector<unsigned char> mess=robot.setArcSpeed(100,1000);
-    //if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
+    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
 void MainWindow::on_pushButton_3_clicked() //back
 {
+
     std::vector<unsigned char> mess=robot.setTranslationSpeed(-250);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
@@ -252,6 +248,7 @@ void MainWindow::on_pushButton_6_clicked() //left
 
 void MainWindow::on_pushButton_5_clicked() //right
 {
+
    std::vector<unsigned char> mess=robot.setArcSpeed(100,-100);
    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
    // std::vector<unsigned char> mess=robot.setRotationSpeed(-M_PI/2);
@@ -267,6 +264,7 @@ void MainWindow::on_pushButton_4_clicked() //stop
 void MainWindow::on_pushButton_clicked()   //set req. values
 {
     std::cout<<"Buton SET"<<endl;
+
 
     robotdata.robotReqX=ui->lineEdit_8->text().toDouble();
     robotdata.robotReqY=ui->lineEdit_9->text().toDouble();
@@ -298,6 +296,29 @@ void MainWindow::on_pushButton_10_clicked() //ADD XY to queue
     robotdata.positionQ.push(posXY);
 
 }
+
+void MainWindow::on_pushButton_7_clicked() //ADD XY to queue
+{
+    std::cout<<"LIDAR Scan"<<endl;
+    mutex.lock();
+
+    ofstream myfile ("mapa.txt");
+    if (myfile.is_open())
+    {
+        for(int i = 0;i<120; i++)
+        {
+            for(int j = 0; j<120;j++)
+            {
+                myfile << map[i][j];
+            }
+            myfile<<"\n";
+        }
+        myfile.close();
+    }
+    robotdata.lidarScan=true;
+    mutex.unlock();
+}
+
 ///tato funkcia vas nemusi zaujimat
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
 void MainWindow::laserprocess()
@@ -319,7 +340,6 @@ void MainWindow::laserprocess()
         {
             if(measureTxt.timestamp <= ((clock()-t_ofset_laser)/100))
             {
-                //std::cout<<"LASER thread stamp "<<(clock()-t_ofset_laser)/100 <<" DATA timestamp "<<measureTxt.timestamp<<endl;
                 for (int i=0;i<sizeof(measureTxt.Data)/sizeof(measureTxt.Data[1]);i++)
                 {
                     measure_tmp.Data[i]=measureTxt.Data[i];
@@ -347,9 +367,9 @@ void MainWindow::laserprocess()
         {
             for(int j = 0; j<120;j++)
             {
-                myfile << map[i][j]<<' ';
+                myfile << map[i][j];
             }
-            myfile<<";"<<"\n";
+            myfile<<"\n";
         }
         myfile.close();
     }

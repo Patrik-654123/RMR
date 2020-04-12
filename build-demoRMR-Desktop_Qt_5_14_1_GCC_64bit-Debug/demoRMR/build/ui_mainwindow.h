@@ -399,7 +399,7 @@ public:
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", Q_NULLPTR));
         pushButton_9->setText(QApplication::translate("MainWindow", "Start", Q_NULLPTR));
         pushButton_8->setText(QApplication::translate("MainWindow", "Reset robot", Q_NULLPTR));
-        pushButton_7->setText(QApplication::translate("MainWindow", "Reset Laser", Q_NULLPTR));
+        pushButton_7->setText(QApplication::translate("MainWindow", "LASER SCAN", Q_NULLPTR));
         pushButton->setText(QApplication::translate("MainWindow", "SET REQUIRED", Q_NULLPTR));
         label->setText(QApplication::translate("MainWindow", "X:", Q_NULLPTR));
         label_8->setText(QApplication::translate("MainWindow", "Y*:", Q_NULLPTR));
