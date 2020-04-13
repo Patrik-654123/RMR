@@ -88,9 +88,9 @@ void MainWindow::processThisRobot()
         std::cout<<"encoder values (L,R): "<<robotdata.offsetL<<' '<<  robotdata.offsetR<<endl;
 
         //other starting values
-        robotdata.robotX=1;
+        robotdata.robotX=6;
         robotdata.robotReqX=1;
-        robotdata.robotY=1;
+        robotdata.robotY=6;
         robotdata.robotReqY=1;
 
         robotdata.robotReqSpeed=0;
@@ -172,29 +172,31 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
-    //if(robotdata.lidarScan)
-    //{
+ //   if(robotdata.lidarScan)
+ //   {
         double x_gi,y_gi,angle;
 
         for (int i=0;i<laserData.numberOfScans;i++)
         {
-            angle=rfi-(laserData.Data[i].scanAngle*(PI/180));
-            //Pri sumulatore +
+            angle=rfi-(laserData.Data[i].scanAngle*(PI/180)); //Pri sumulatore +
+
             x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(angle);
             y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(angle);
 
             x_gi=x_gi/50;
             y_gi=y_gi/50;
 
-            if(x_gi>119)
-                x_gi=119;
-            if(y_gi>119)
-                y_gi=119;
+            if(x_gi>239)
+                x_gi=239;
+            if(y_gi>239)
+                y_gi=239;
 
-            map[(int)(x_gi)][(int)(y_gi)]=1;
+            glob_map[(int)(x_gi)][(int)(y_gi)]=1;
         }
-    //    robotdata.lidarScan=false;
-    //}
+            glob_map[(int)(rx*20)][(int)(ry*20)]=0;
+
+        robotdata.lidarScan=false;
+  //  }
 
     updateLaserPicture=1;
     mutex.unlock();//skoncil som
@@ -302,7 +304,7 @@ void MainWindow::on_pushButton_4_clicked() //stop
     //Vito
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////kde su
     // planovanie v mape spravenej nami - treba poskusat
-    getWayPoints(&map[0][0], 120, 120, rx, ry, 300.0, 350.0);
+    getWayPoints(&glob_map[0][0], 120, 120, rx, ry, 300.0, 350.0);
 
     ofstream myfile ("mapaMap.txt");
     if (myfile.is_open())
@@ -311,7 +313,7 @@ void MainWindow::on_pushButton_4_clicked() //stop
         {
             for(int j = 0; j<120;j++)
             {
-                myfile << map[i][j]<<' ';
+                myfile << glob_map[i][j]<<' ';
             }
             myfile<<";"<<"\n";
         }
@@ -383,7 +385,7 @@ void MainWindow::on_pushButton_7_clicked() //ADD XY to queue
         {
             for(int j = 0; j<120;j++)
             {
-                myfile << map[i][j];
+                myfile << glob_map[i][j];
             }
             myfile<<"\n";
         }
@@ -434,20 +436,8 @@ void MainWindow::laserprocess()
     }
     //koniec citania dat lidaru z dokumentu
 
-    ofstream myfile ("mapa.txt");
-    if (myfile.is_open())
-    {
-        for(int i = 0;i<120; i++)
-        {
-            for(int j = 0; j<120;j++)
-            {
-                myfile << map[i][j];
-            }
-            myfile<<"\n";
-        }
-        myfile.close();
-    }
-
+    //uloz mapu
+    saveMap();
 
     // Initialize Winsock
     las_slen = sizeof(las_si_other);
@@ -1176,3 +1166,73 @@ void MainWindow::expandObstacles(int xSize, int ySize){
 
 }
 
+//zmensi mapu a ulozi
+void MainWindow::saveMap()
+{
+    int x_first,x_last,y_first,y_last;
+    x_first=x_last=y_first=y_last=0;
+
+    //Prejdi celu mapu najdi platne data
+    for(int i = 0;i<240; i++)
+    {
+        for(int j = 0; j<240;j++)
+        {
+            if(glob_map[i][j] == 1 && x_first == 0)
+            {   x_first=i;
+                x_last=i;
+            }else if(glob_map[i][j] == 1 && i > x_last)
+                x_last=i;
+
+            if(glob_map[i][j] == 1 && y_first == 0)
+                y_first=j;
+             else if(glob_map[i][j] == 1 && y_first > j)
+                y_first=j;
+
+            if(glob_map[i][j] == 1 && y_last < j)
+                y_last=j;
+        }
+    }
+
+    int delta_x = x_last-x_first;
+    int delta_y = y_last-y_first;
+
+    //alokuj mapu
+    map = new int*[delta_x];
+    for(int i=0;i<delta_x;++i)
+    {
+        map[i]=new int[delta_y];
+    }
+
+
+    ofstream myfile1 ("mapa.txt");
+    if(myfile1.is_open())
+    {
+        for(int i=0;i<delta_x;i++)
+        {
+            for(int j=0;j<delta_y;j++)
+            {
+                myfile1<<glob_map[x_first+i][y_first+j];
+                map[i][j]=glob_map[x_first+i][y_first+j];
+            }
+            myfile1<<"\n";
+        }
+        myfile1.close();
+    }
+
+    ofstream myfile ("mapa_cela.txt");
+    if (myfile.is_open())
+    {
+        for(int i = 0;i<240; i++)
+        {
+            for(int j = 0; j<240;j++)
+            {
+                myfile << glob_map[i][j];
+            }
+            myfile<<"\n";
+        }
+        myfile.close();
+    }
+
+
+
+}

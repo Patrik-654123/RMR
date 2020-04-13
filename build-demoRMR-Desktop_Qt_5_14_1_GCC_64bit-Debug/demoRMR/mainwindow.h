@@ -47,6 +47,9 @@ public:
     void setAngle();
     void getPossition();
 
+    //PATO uloha3
+    void saveMap();
+
     //VITO uloha4
     void getWayPoints(int* Map, int xSize, int ySize, double rx, double ry, double finX, double finY);
     void TMapAreaToArrayMap();
@@ -111,7 +114,7 @@ private:
      CKobuki robot;
      TKobukiData robotdata;
 
-     //PATO
+     //PATO uloha 1. 3.
      CKobukiTxtData robotTxt;
      KobukiData robotTxtData;
 
@@ -119,8 +122,8 @@ private:
      LaserMeasurementTxt copyOfLaserTxtData;
      clock_t t_offset;
      double rx,ry,rfi;
-     int map[120][120]={};
-     //
+     int glob_map[240][240]={};
+     int** map;
 
      //uloha 4
      map_loader mapLoader;

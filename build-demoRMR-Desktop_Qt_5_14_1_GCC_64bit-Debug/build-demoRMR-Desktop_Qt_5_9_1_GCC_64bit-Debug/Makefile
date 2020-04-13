@@ -52,12 +52,14 @@ OBJECTS_DIR   = ../demoRMR/build/
 
 SOURCES       = ../demoRMR/main.cpp \
 		../demoRMR/mainwindow.cpp \
+		../demoRMR/map_loader.cpp \
 		../demoRMR/rplidar.cpp \
 		../demoRMR/CKobuki.cpp \
 		../demoRMR/KobukiTxtData.cpp \
 		../demoRMR/rplidarTxt.cpp ../demoRMR/build/moc_mainwindow.cpp
 OBJECTS       = ../demoRMR/build/main.o \
 		../demoRMR/build/mainwindow.o \
+		../demoRMR/build/map_loader.o \
 		../demoRMR/build/rplidar.o \
 		../demoRMR/build/CKobuki.o \
 		../demoRMR/build/KobukiTxtData.o \
@@ -243,11 +245,13 @@ DIST          = ../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/features/yacc.prf \
 		../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/features/lex.prf \
 		../demoRMR/demoRMR.pro ../demoRMR/mainwindow.h \
+		../demoRMR/map_loader.h \
 		../demoRMR/rplidar.h \
 		../demoRMR/CKobuki.h \
 		../demoRMR/KobukiTxtData.h \
 		../demoRMR/rplidarTxt.h ../demoRMR/main.cpp \
 		../demoRMR/mainwindow.cpp \
+		../demoRMR/map_loader.cpp \
 		../demoRMR/rplidar.cpp \
 		../demoRMR/CKobuki.cpp \
 		../demoRMR/KobukiTxtData.cpp \
@@ -645,8 +649,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents ../../../../Qt5.9.1/5.9.1/gcc_64/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../demoRMR/mainwindow.h ../demoRMR/rplidar.h ../demoRMR/CKobuki.h ../demoRMR/KobukiTxtData.h ../demoRMR/rplidarTxt.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../demoRMR/main.cpp ../demoRMR/mainwindow.cpp ../demoRMR/rplidar.cpp ../demoRMR/CKobuki.cpp ../demoRMR/KobukiTxtData.cpp ../demoRMR/rplidarTxt.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../demoRMR/mainwindow.h ../demoRMR/map_loader.h ../demoRMR/rplidar.h ../demoRMR/CKobuki.h ../demoRMR/KobukiTxtData.h ../demoRMR/rplidarTxt.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../demoRMR/main.cpp ../demoRMR/mainwindow.cpp ../demoRMR/map_loader.cpp ../demoRMR/rplidar.cpp ../demoRMR/CKobuki.cpp ../demoRMR/KobukiTxtData.cpp ../demoRMR/rplidarTxt.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../demoRMR/mainwindow.ui $(DISTDIR)/
 
 
@@ -788,6 +792,9 @@ compiler_moc_header_clean:
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/QMutex \
 		../demoRMR/CKobuki.h \
 		../demoRMR/rplidar.h \
+		../demoRMR/rplidarTxt.h \
+		../demoRMR/KobukiTxtData.h \
+		../demoRMR/map_loader.h \
 		../demoRMR/mainwindow.h \
 		../demoRMR/build/moc_predefs.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/bin/moc
@@ -919,6 +926,9 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_ui
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/QMutex \
 		../demoRMR/CKobuki.h \
 		../demoRMR/rplidar.h \
+		../demoRMR/rplidarTxt.h \
+		../demoRMR/KobukiTxtData.h \
+		../demoRMR/map_loader.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QApplication \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qapplication.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/qcoreapplication.h \
@@ -1035,11 +1045,11 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_ui
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/QMutex \
 		../demoRMR/CKobuki.h \
 		../demoRMR/rplidar.h \
+		../demoRMR/rplidarTxt.h \
+		../demoRMR/KobukiTxtData.h \
+		../demoRMR/map_loader.h \
 		../demoRMR/build/ui_mainwindow.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/QVariant \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QAction \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qaction.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qactiongroup.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QApplication \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qapplication.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/qcoreapplication.h \
@@ -1047,31 +1057,16 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_ui
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qdesktopwidget.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtGui/qguiapplication.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtGui/qinputmethod.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QButtonGroup \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qbuttongroup.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QFrame \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qframe.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QGridLayout \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qgridlayout.h \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QFormLayout \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qformlayout.h \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QLayout \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qlayout.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qlayoutitem.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qboxlayout.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QHeaderView \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qheaderview.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qabstractitemview.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qabstractscrollarea.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/qabstractitemmodel.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/qitemselectionmodel.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qstyleoption.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qabstractspinbox.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtGui/qvalidator.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtCore/qregularexpression.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qslider.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qabstractslider.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qstyle.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qtabbar.h \
-		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qrubberband.h \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qgridlayout.h \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QFrame \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qframe.h \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QGridLayout \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QLabel \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qlabel.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QLineEdit \
@@ -1092,6 +1087,9 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_ui
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtGui/qpainter.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/mainwindow.o ../demoRMR/mainwindow.cpp
 
+../demoRMR/build/map_loader.o: ../demoRMR/map_loader.cpp ../demoRMR/map_loader.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/map_loader.o ../demoRMR/map_loader.cpp
+
 ../demoRMR/build/rplidar.o: ../demoRMR/rplidar.cpp ../demoRMR/rplidar.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/rplidar.o ../demoRMR/rplidar.cpp
 
@@ -1101,7 +1099,8 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_ui
 ../demoRMR/build/KobukiTxtData.o: ../demoRMR/KobukiTxtData.cpp ../demoRMR/KobukiTxtData.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/KobukiTxtData.o ../demoRMR/KobukiTxtData.cpp
 
-../demoRMR/build/rplidarTxt.o: ../demoRMR/rplidarTxt.cpp ../demoRMR/rplidarTxt.h
+../demoRMR/build/rplidarTxt.o: ../demoRMR/rplidarTxt.cpp ../demoRMR/rplidarTxt.h \
+		../demoRMR/rplidar.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../demoRMR/build/rplidarTxt.o ../demoRMR/rplidarTxt.cpp
 
 ../demoRMR/build/moc_mainwindow.o: ../demoRMR/build/moc_mainwindow.cpp 
