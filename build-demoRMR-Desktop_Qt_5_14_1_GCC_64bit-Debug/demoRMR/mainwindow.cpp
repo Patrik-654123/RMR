@@ -39,6 +39,7 @@ MainWindow::~MainWindow()
 void MainWindow::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
+
     ///prekreslujem lidar len vtedy, ked viem ze mam nove data. paintevent sa
     /// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
     painter.setBrush(Qt::black);//cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
@@ -47,10 +48,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
     pero.setWidth(3);//hrubka pera -3pixely
     pero.setColor(Qt::green);//farba je zelena
     QRect rect;//(20,120,700,500);
+    QRect rect2;
     rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
+    rect2=ui->frame_2->geometry();
+
 
 
     painter.drawRect(rect);//vykreslite stvorec
+    painter.drawRect(rect2);
 
     if(updateLaserPicture==1)
     {
@@ -69,10 +74,24 @@ void MainWindow::paintEvent(QPaintEvent *event)
             int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x();
             int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y();
             if(rect.contains(xp,yp))
-                painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2p
-
+                painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2
         }
 
+
+        int xMap,yMap;
+        for(int x = 0;x<240;x++)
+        {
+            for(int y = 0; y<240;y++)
+            {
+
+                if(glob_map[x][y]==1)
+                {
+                    xMap=rect2.bottomLeft().x()+x;
+                    yMap=rect2.bottomLeft().y()-y;
+                    painter.drawEllipse(QPoint(xMap, yMap),1,1);
+                }
+            }
+        }
         mutex.unlock();//unlock..skoncil som
     }
 }
@@ -399,44 +418,9 @@ void MainWindow::on_pushButton_7_clicked() //ADD XY to queue
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
 void MainWindow::laserprocess()
 {
-    //casova synchronizacia
-    mutex.lock();
-    clock_t t_ofset_laser= t_offset;
-    mutex.unlock();
-
-    //Citanie dat lidaru, z textoveho dokumentu
-    lidarTxtData.connectToFile("lidardata.txt");
-
-    if(lidarTxtData.fp!= NULL)
-    {
-        LaserMeasurementTxt measureTxt;
-        LaserMeasurement measure_tmp;
-        measureTxt=lidarTxtData.getMeasurementFromFile();
-        while(1)
-        {
-            if(measureTxt.timestamp <= ((clock()-t_ofset_laser)/100))
-            {
-                for (int i=0;i<sizeof(measureTxt.Data)/sizeof(measureTxt.Data[1]);i++)
-                {
-                    measure_tmp.Data[i]=measureTxt.Data[i];
-                }
-
-                measure_tmp.numberOfScans=measureTxt.numberOfScans;
-                processThisLidar(measure_tmp);
-
-                measureTxt=lidarTxtData.getMeasurementFromFile();
-
-                if(measureTxt.numberOfScans==-1)
-                {
-                    std::cout<<"read lidar_data finished"<<endl;
-                    break;
-                }
-            }
-        }
-    }
-    //koniec citania dat lidaru z dokumentu
-
-    //uloz mapu
+    //precitaj data z lidaru
+    readLidarSynch();
+    //uloz precitanu mapu
     saveMap();
 
     // Initialize Winsock
@@ -487,37 +471,7 @@ void MainWindow::laserprocess()
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z robota (UDP komunikacia)
 void MainWindow::robotprocess()
 {
-    //casova synchronizacia
-    mutex.lock();
-    clock_t t_ofset_robot= t_offset;
-    mutex.unlock();
-
-    //citanie dat robota z textoveho dokumentu
-    robotTxt.openFile("robotdata.txt");
-    if (robotTxt.textfile != NULL)
-    {
-        robotTxtData=robotTxt.getNewData();
-        while(1)
-        {
-            if(robotTxtData.timestamp <= ((clock()-t_ofset_robot)/100))
-            {
-               // std::cout<<"ROBOT thread stamp "<<(clock()-t_ofset_robot)/100 <<" DATA timestamp "<<robotTxtData.timestamp<<endl;
-                robotdata.EncoderLeft=robotTxtData.encoderleft;
-                robotdata.EncoderRight=robotTxtData.encoderright;
-                robotdata.GyroAngle=robotTxtData.gyroangle;
-
-                processThisRobot();
-
-                robotTxtData=robotTxt.getNewData();
-                if(robotTxtData.timestamp==0)
-                {
-                    std::cout<<"read robot_data finished"<<endl;
-                    break;
-                }
-            }
-        }
-    }
-    //textovy dokument precitany
+    readRobotSynch();
 
 
     if ((rob_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
@@ -1163,7 +1117,83 @@ void MainWindow::expandObstacles(int xSize, int ySize){
                 idealArrayMap[x][y] = 1;
         }
     }
+}
 
+//cita data z robota v casovej vzorke
+void MainWindow::readRobotSynch()
+{
+    //casova synchronizacia
+    mutex.lock();
+    clock_t t_ofset_robot= t_offset;
+    mutex.unlock();
+
+    //citanie dat robota z textoveho dokumentu
+    robotTxt.openFile("robotdata.txt");
+    if (robotTxt.textfile != NULL)
+    {
+        robotTxtData=robotTxt.getNewData();
+        while(1)
+        {
+            if(robotTxtData.timestamp <= ((clock()-t_ofset_robot)/100))
+            {
+               // std::cout<<"ROBOT thread stamp "<<(clock()-t_ofset_robot)/100 <<" DATA timestamp "<<robotTxtData.timestamp<<endl;
+                robotdata.EncoderLeft=robotTxtData.encoderleft;
+                robotdata.EncoderRight=robotTxtData.encoderright;
+                robotdata.GyroAngle=robotTxtData.gyroangle;
+
+                processThisRobot();
+
+                robotTxtData=robotTxt.getNewData();
+                if(robotTxtData.timestamp==0)
+                {
+                    std::cout<<"read robot_data finished"<<endl;
+                    break;
+                }
+            }
+        }
+    }
+    //textovy dokument precitany
+}
+
+//cita data z lidaru v casovej vzorke
+void MainWindow::readLidarSynch()
+{
+    //casova synchronizacia
+    mutex.lock();
+    clock_t t_ofset_laser= t_offset;
+    mutex.unlock();
+
+    //Citanie dat lidaru, z textoveho dokumentu
+    lidarTxtData.connectToFile("lidardata.txt");
+
+    if(lidarTxtData.fp!= NULL)
+    {
+        LaserMeasurementTxt measureTxt;
+        LaserMeasurement measure_tmp;
+        measureTxt=lidarTxtData.getMeasurementFromFile();
+        while(1)
+        {
+            if(measureTxt.timestamp <= ((clock()-t_ofset_laser)/100))
+            {
+                for (int i=0;i<sizeof(measureTxt.Data)/sizeof(measureTxt.Data[1]);i++)
+                {
+                    measure_tmp.Data[i]=measureTxt.Data[i];
+                }
+
+                measure_tmp.numberOfScans=measureTxt.numberOfScans;
+                processThisLidar(measure_tmp);
+
+                measureTxt=lidarTxtData.getMeasurementFromFile();
+
+                if(measureTxt.numberOfScans==-1)
+                {
+                    std::cout<<"read lidar_data finished"<<endl;
+                    break;
+                }
+            }
+            //textovy dokument precitany
+        }
+    }
 }
 
 //zmensi mapu a ulozi
@@ -1193,23 +1223,22 @@ void MainWindow::saveMap()
         }
     }
 
-    int delta_x = x_last-x_first;
-    int delta_y = y_last-y_first;
+    map_x = x_last-x_first;
+    map_y = y_last-y_first;
 
     //alokuj mapu
-    map = new int*[delta_x];
-    for(int i=0;i<delta_x;++i)
+    int **map = new int*[map_x];
+    for(int i=0;i<map_x;i++)
     {
-        map[i]=new int[delta_y];
+        map[i]=new int[map_y];
     }
-
 
     ofstream myfile1 ("mapa.txt");
     if(myfile1.is_open())
     {
-        for(int i=0;i<delta_x;i++)
+        for(int i=0;i<map_x;i++)
         {
-            for(int j=0;j<delta_y;j++)
+            for(int j=0;j<map_y;j++)
             {
                 myfile1<<glob_map[x_first+i][y_first+j];
                 map[i][j]=glob_map[x_first+i][y_first+j];
@@ -1232,7 +1261,4 @@ void MainWindow::saveMap()
         }
         myfile.close();
     }
-
-
-
 }

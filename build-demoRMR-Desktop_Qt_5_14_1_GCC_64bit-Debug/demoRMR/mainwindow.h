@@ -47,7 +47,9 @@ public:
     void setAngle();
     void getPossition();
 
-    //PATO uloha3
+    //PATO uloha3 aj uloha1
+    void readLidarSynch();
+    void readRobotSynch();
     void saveMap();
 
     //VITO uloha4
@@ -124,6 +126,8 @@ private:
      double rx,ry,rfi;
      int glob_map[240][240]={};
      int** map;
+     int map_x,map_y;
+
 
      //uloha 4
      map_loader mapLoader;
