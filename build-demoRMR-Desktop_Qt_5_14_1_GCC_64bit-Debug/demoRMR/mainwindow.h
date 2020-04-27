@@ -57,7 +57,8 @@ public:
     void TMapAreaToArrayMap();
     void evaluateNeighbors(int* Map, int xSize, int ySize, queue<Point>* pointsToEvaluate, int x, int y);
     int setDirection(int* Map, int xSize, int ySize, int x, int y, int oldDirection);
-    void expandObstacles(int xSize, int ySize);
+    void expandObstacles(int* Map,int xSize, int ySize);
+    void expandObstacles();
 
 
     pthread_t robotthreadHandle; // handle na vlakno
