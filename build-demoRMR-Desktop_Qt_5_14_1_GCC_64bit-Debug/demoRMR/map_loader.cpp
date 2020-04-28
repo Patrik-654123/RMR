@@ -3,6 +3,8 @@
 #include "stdio.h"
 #include "string.h"
 
+
+
 map_loader::map_loader()
 {
 }

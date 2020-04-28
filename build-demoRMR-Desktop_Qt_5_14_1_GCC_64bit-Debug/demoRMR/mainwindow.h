@@ -47,9 +47,14 @@ public:
     void setAngle();
     void getPossition();
 
+    //PATO
+    //uloha2
+    void findWay(LaserMeasurement &laserData);
+
     //PATO uloha3 aj uloha1
     void readLidarSynch();
     void readRobotSynch();
+    void writeMap(LaserMeasurement &laserData);
     void saveMap();
 
     //VITO uloha4
@@ -57,7 +62,7 @@ public:
     void TMapAreaToArrayMap();
     void evaluateNeighbors(int* Map, int xSize, int ySize, queue<Point>* pointsToEvaluate, int x, int y);
     int setDirection(int* Map, int xSize, int ySize, int x, int y, int oldDirection);
-    void expandObstacles(int* Map,int xSize, int ySize);
+    void expandObstacles(int** Map,int xSize, int ySize);
     void expandObstacles();
 
 
@@ -124,7 +129,7 @@ private:
      rplidarTxt lidarTxtData;
      LaserMeasurementTxt copyOfLaserTxtData;
      clock_t t_offset;
-     double rx,ry,rfi;
+     double rx,rrx,ry,rry,rfi;
      int glob_map[240][240]={};
      int** map;
      int map_x,map_y;

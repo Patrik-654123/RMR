@@ -18,7 +18,6 @@
 ///
 ///
 
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -59,7 +58,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     if(updateLaserPicture==1)
     {
-
         mutex.lock();//lock.. idem robit s premennou ktoru ine vlakno moze prepisovat...
         updateLaserPicture=0;
 
@@ -76,7 +74,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
             if(rect.contains(xp,yp))
                 painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2
         }
-
 
         int xMap,yMap;
         for(int x = 0;x<240;x++)
@@ -158,7 +155,6 @@ void MainWindow::processThisRobot()
     //Fukncia lokalizacie
     processLocalization();
 
-
     ///tu mozete robit s datami z robota
     ///ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
     ///teraz tu len vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
@@ -191,31 +187,11 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
- //   if(robotdata.lidarScan)
- //   {
-        double x_gi,y_gi,angle;
+    //zapis scan do mapy
+    writeMap(laserData);
 
-        for (int i=0;i<laserData.numberOfScans;i++)
-        {
-            angle=rfi-(laserData.Data[i].scanAngle*(PI/180)); //Pri sumulatore +
-
-            x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(angle);
-            y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(angle);
-
-            x_gi=x_gi/50;
-            y_gi=y_gi/50;
-
-            if(x_gi>239)
-                x_gi=239;
-            if(y_gi>239)
-                y_gi=239;
-
-            glob_map[(int)(x_gi)][(int)(y_gi)]=1;
-        }
-            glob_map[(int)(rx*20)][(int)(ry*20)]=0;
-
-        robotdata.lidarScan=false;
-  //  }
+    //najdi prekazky
+    findWay(laserData);
 
     updateLaserPicture=1;
     mutex.unlock();//skoncil som
@@ -247,16 +223,14 @@ void MainWindow::on_pushButton_9_clicked() //start button
     //Vito
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
     // planovanie z mapy idealnej y .txt
 
     int xSize = 120;
     int ySize = 120;
 
     TMapAreaToArrayMap();
-    expandObstacles(&idealArrayMap[0][0],xSize,ySize);
+    //expandObstacles(&idealArrayMap[0][0],xSize,ySize);
     getWayPoints(&idealArrayMap[0][0], xSize, ySize, 100, 100, 500.0, 250.0);
-
 
     ofstream myfile ("idealMapa.txt");
     if (myfile.is_open())
@@ -271,7 +245,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
         }
 
         myfile<<"\n\nBODY:\n"<<' ';
-
         queue<Point> wayPointsCopy = wayPoints;
         while(!wayPointsCopy.empty()) {
 
@@ -279,7 +252,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
             myfile<< wayPointsCopy.front().y<<"\n";
             wayPointsCopy.pop();
         }
-
         myfile.close();
     }
     //////////////////////////////////////////////////////////
@@ -323,7 +295,7 @@ void MainWindow::on_pushButton_4_clicked() //stop
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////kde su
     // planovanie v mape spravenej nami - treba poskusat
     mutex.lock();
-    expandObstacles();
+    expandObstacles(map,map_x,map_y);
 
     //getWayPoints(&map[0][0],map_x, map_y, 100, 100, 300.0, 350.0);
 
@@ -384,7 +356,7 @@ void MainWindow::on_pushButton_clicked()   //set req. values
     robotdata.robotRotated=false;
 }
 
-void MainWindow::on_pushButton_10_clicked() //ADD XY to queue
+void MainWindow::on_pushButton_10_clicked() //add XY to queue
 {
     std::cout<<"Button ADD to Queue"<<endl;
 
@@ -392,14 +364,11 @@ void MainWindow::on_pushButton_10_clicked() //ADD XY to queue
     posXY=make_pair(ui->lineEdit_8->text().toDouble(),ui->lineEdit_9->text().toDouble());
 
     robotdata.positionQ.push(posXY);
-
 }
 
-void MainWindow::on_pushButton_7_clicked() //ADD XY to queue
+void MainWindow::on_pushButton_7_clicked() //LIDAR scan button
 {
-    std::cout<<"LIDAR Scan"<<endl;
     mutex.lock();
-
     ofstream myfile ("mapa.txt");
     if (myfile.is_open())
     {
@@ -417,7 +386,7 @@ void MainWindow::on_pushButton_7_clicked() //ADD XY to queue
     mutex.unlock();
 }
 
-///tato funkcia vas nemusi zaujimat
+/// tato funkcia vas nemusi zaujimat
 /// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
 void MainWindow::laserprocess()
 {
@@ -466,8 +435,8 @@ void MainWindow::laserprocess()
         measure.numberOfScans=las_recv_len/sizeof(LaserData);
         //tu mame data..zavolame si funkciu
         processThisLidar(measure);
-///ako som vravel,toto vas nemusi zaujimat
     }
+    ///ako som vravel,toto vas nemusi zaujimat
 }
 
 ///tato funkcia vas nemusi zaujimat
@@ -801,10 +770,12 @@ void MainWindow::processLocalization()
     robotdata.robotFi=Fi_k1;
     robotdata.robotFiDeg=robotdata.robotFi*(180/PI);
 
-    //Ulozenie do pomocnych premenych mapy
+    //Ulozenie do pomocnych premenych mapy a detegovania prekazok
     mutex.lock();
     rx=robotdata.robotX;
+    rrx=robotdata.robotReqX;
     ry=robotdata.robotY;
+    rry=robotdata.robotReqY;
     rfi=robotdata.robotFi;
     mutex.unlock();
 
@@ -846,15 +817,12 @@ void MainWindow::getWayPoints(int* Map, int xSize, int ySize, double rx, double 
 
     }
 
-
-
     //    while((*Map+(x+1)*xSize+y) != 2 /*&& (*Map+(x+1)*xSize+y+1) != 2*/ &&
     //           (*Map+x*xSize+y+1) != 2 /*&& (*Map+(x-1)*xSize+y+1) != 2*/ &&
     //           (*Map+(x-1)*xSize+y) != 2 /*&& (*Map+(x-1)*xSize+y-1) != 2*/ &&
     //           (*Map+x*xSize+y-1) != 2 /*&& (*Map+(x+1)*xSize+y-1) != 2*/ ){
 
     //    while((*Map+(x+1)*xSize+y) != 2 && (*Map+x*xSize+y+1) != 2 && (*Map+(x-1)*xSize+y) != 2 && (*Map+x*xSize+y-1) != 2 && (*Map+x*xSize+y) != 2){
-
 
     while (1){
 
@@ -939,7 +907,6 @@ int MainWindow::setDirection(int* Map, int xSize, int ySize, int x, int y, int o
     return direction;
 }
 
-
 //4-susedne ohodnotenie
 void MainWindow::evaluateNeighbors(int* Map,int xSize, int ySize, queue<Point>* pointsToEvaluate , int x, int y){
 
@@ -983,16 +950,13 @@ void MainWindow::TMapAreaToArrayMap(){
     //prepocita stenu dookola
     for (int i = 0; i < idealMap.wall.numofpoints; ++i) {
 
-
         if (idealMap.wall.numofpoints - i > 1){
-
             pred = i;
             po = i+1;
         }
         else{
             pred = i;
             po = 0;
-
         }
 
         // ciara v x smere
@@ -1039,14 +1003,12 @@ void MainWindow::TMapAreaToArrayMap(){
 
 
             if (it->numofpoints - i > 1){
-
                 pred = i;
                 po = i+1;
             }
             else{
                 pred = i;
                 po = 0;
-
             }
 
             // ciara v x smere
@@ -1122,23 +1084,46 @@ void MainWindow::expandObstacles()
 
 }
 //zvacsi prekazky o polomer robota
-void MainWindow::expandObstacles(int* Map, int xSize, int ySize){
+void MainWindow::expandObstacles(int** Map, int xSize, int ySize){
 
     double robotRadius = 20.0; //cm
     int numOfExpandedCells = (int) (robotRadius/widthOfCell);
+
 
     //da 2 tam kde je okraj (rezerva)
     for(int x = 0; x < xSize; x++){
 
         for(int y = 0; y < ySize; y++){
 
-            if (*(Map+x*xSize+y) == 1){
+            if (Map[x][y] == 1){
 
                 for (int i = -numOfExpandedCells; i < numOfExpandedCells; i++){
                     for (int j = -numOfExpandedCells; j < numOfExpandedCells; j++){
 
-                        if (x+i < xSize && x+i > 0 && y+j < ySize && y+j > 0 && *(Map+(x+i)*xSize+y+j) == 0)
-                            *(Map+(x+i)*xSize+y+j) = 2;
+                        if (x+i < xSize && x+i > 0 && y+j < ySize && y+j > 0 && Map[x+i][y+j] == 0)
+                            Map[x+i][y+j] = 2;
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    /*
+
+    //da 2 tam kde je okraj (rezerva)
+    for(int x = 0; x < xSize; x++){
+
+        for(int y = 0; y < ySize; y++){
+
+            if (**(Map+x*xSize+y) == 1){
+
+                for (int i = -numOfExpandedCells; i < numOfExpandedCells; i++){
+                    for (int j = -numOfExpandedCells; j < numOfExpandedCells; j++){
+
+                        if (x+i < xSize && x+i > 0 && y+j < ySize && y+j > 0 && **(Map+(x+i)*xSize+y+j) == 0)
+                            **(Map+(x+i)*xSize+y+j) = 2;
                     }
                 }
             }
@@ -1150,10 +1135,11 @@ void MainWindow::expandObstacles(int* Map, int xSize, int ySize){
 
         for(int y = 0; y < ySize; y++){
 
-            if (*(Map+x*xSize+y) == 2)
-                *(Map+x*xSize+y) = 1;
+            if (**(Map+x*xSize+y) == 2)
+                **(Map+x*xSize+y) = 1;
         }
     }
+    */
 }
 
 
@@ -1273,6 +1259,33 @@ void MainWindow::readLidarSynch()
     }
 }
 
+//zapis snimku do globalnej mapy
+void MainWindow::writeMap(LaserMeasurement &laserData)
+{
+    //if(robotdata.lidarScan){
+    double x_gi,y_gi,angle;
+
+    for (int i=0;i<laserData.numberOfScans;i++)
+    {
+        angle=rfi-(laserData.Data[i].scanAngle*(PI/180)); //Pri sumulatore +
+
+        x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(angle);
+        y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(angle);
+
+        x_gi=x_gi/50;
+        y_gi=y_gi/50;
+
+        if(x_gi>239)
+            x_gi=239;
+        if(y_gi>239)
+            y_gi=239;
+
+        glob_map[(int)(x_gi)][(int)(y_gi)]=1;
+    }
+    glob_map[(int)(rx*20)][(int)(ry*20)]=0;
+    //robotdata.lidarScan=false;}
+}
+
 //zmensi mapu a ulozi
 void MainWindow::saveMap()
 {
@@ -1339,4 +1352,57 @@ void MainWindow::saveMap()
         }
         myfile.close();
     }
+}
+
+//deteguj prekazky a najdi cestu
+void MainWindow::findWay(LaserMeasurement &laserData)
+{
+    double x_gi,y_gi,angle;
+    double b=0.4;
+    double crit_dist;
+    double dist=sqrt(pow(rx-rrx,2.0)+pow(ry-rry,2.0));
+
+    double alfa=atan2(rry-ry,rrx-rx)-rfi;
+
+    if(alfa<0)
+        alfa=2*PI+alfa;
+
+    double start_angle=alfa-(PI/2);
+    if (start_angle<0)
+        start_angle=2*PI+start_angle;
+
+    double stop_angle=alfa+(PI/2);
+    if(stop_angle > 2*PI)
+            stop_angle=stop_angle-2*PI;
+
+    for (int i=0;i<laserData.numberOfScans;i++)
+    {
+          angle=(laserData.Data[i].scanAngle*(PI/180));
+         if(start_angle <= angle && angle <= stop_angle)
+         {
+
+          std::cout<<"start angle "<<start_angle*(180/PI)<<" measure angle "<<angle*(180/PI)<< " stop angle "<<stop_angle*(180/PI)<<endl;
+         }
+    }
+
+
+
+//    for (int i=0;i<laserData.numberOfScans;i++)
+//    {
+//        angle=rfi-(laserData.Data[i].scanAngle*(PI/180)); //Pri sumulatore +
+
+//        x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(angle);
+//        y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(angle);
+
+
+//        std::cout<<i<<" alfa "<<angle*(180/PI)<<" d_crit "<<b/sin(laserData.Data[i].scanAngle*(PI/180))<<endl;
+
+//        x_gi=x_gi/50;
+//        y_gi=y_gi/50;
+
+//        if(x_gi>239)
+//            x_gi=239;
+//        if(y_gi>239)
+//            y_gi=239;
+ //   }
 }
