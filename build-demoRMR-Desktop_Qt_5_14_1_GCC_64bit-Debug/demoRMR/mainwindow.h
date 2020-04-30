@@ -58,12 +58,14 @@ public:
     void saveMap();
 
     //VITO uloha4
-    void getWayPoints(int* Map, int xSize, int ySize, double rx, double ry, double finX, double finY);
-    void TMapAreaToArrayMap();
-    void evaluateNeighbors(int* Map, int xSize, int ySize, queue<Point>* pointsToEvaluate, int x, int y);
-    int setDirection(int* Map, int xSize, int ySize, int x, int y, int oldDirection);
-    void expandObstacles(int** Map,int xSize, int ySize);
-    void expandObstacles();
+    void getWayPoints(int** map, int xSize, int ySize, double rx, double ry, double finX, double finY);
+    void fileToIdealArrayMap(char *filename);
+    void evaluateNeighbors(int** map, int xSize, int ySize, queue<Point>* pointsToEvaluate, int x, int y);
+    int setDirection(int** map, int xSize, int ySize, int x, int y, int oldDirection);
+    void expandObstacles(int** map,int xSize, int ySize);
+    bool foundFinish(int** map, Point p, int xSize, int ySize);
+
+    void printToFile(char* file,int** map, int xSize, int ySize, bool points);
 
 
     pthread_t robotthreadHandle; // handle na vlakno
@@ -130,7 +132,7 @@ private:
      LaserMeasurementTxt copyOfLaserTxtData;
      clock_t t_offset;
      double rx,rrx,ry,rry,rfi;
-     int glob_map[240][240]={};
+     int** glob_map;
      int** map;
      int map_x,map_y;
 
@@ -139,7 +141,7 @@ private:
      map_loader mapLoader;
      TMapArea idealMap;
      queue<Point> wayPoints;
-     int idealArrayMap[120][120]={};
+     int** idealArrayMap;
      int widthOfCell = 5; //cm
      //
 

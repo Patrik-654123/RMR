@@ -220,40 +220,38 @@ void MainWindow::on_pushButton_9_clicked() //start button
     ///toto je prepojenie signalu o zmene udajov, na signal
     connect(this,SIGNAL(uiValuesChanged(double,double,double)),this,SLOT(setUiValues(double,double,double)));
 
+//////////////////////////////////////////////////////////////////////////
+    //alokujem global mapu
+    glob_map = new int*[240];
+
+    for(int i=0; i<240; i++)
+    {
+        glob_map[i]=new int[240];
+
+        for(int j=0; j<240; j++)
+        {
+            glob_map[i][j] = 0;
+        }
+
+    }
+
+
+
+
     //Vito
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // planovanie z mapy idealnej y .txt
+    // planovanie z mapy idealnej z .txt
 
     int xSize = 120;
     int ySize = 120;
 
-    TMapAreaToArrayMap();
-    //expandObstacles(&idealArrayMap[0][0],xSize,ySize);
-    getWayPoints(&idealArrayMap[0][0], xSize, ySize, 100, 100, 500.0, 250.0);
+    fileToIdealArrayMap("priestor.txt");
+    expandObstacles(idealArrayMap, xSize, ySize);
+    getWayPoints(idealArrayMap, xSize, ySize, 100, 100, 500.0, 250.0);
 
-    ofstream myfile ("idealMapa.txt");
-    if (myfile.is_open())
-    {
-        for(int i = 0;i<xSize; i++)
-        {
-            for(int j = 0; j<ySize;j++)
-            {
-                myfile << idealArrayMap[i][j]<<' ';
-            }
-            myfile<<";"<<"\n";
-        }
+    printToFile("idealMap.txt", idealArrayMap, xSize, ySize, true);
 
-        myfile<<"\n\nBODY:\n"<<' ';
-        queue<Point> wayPointsCopy = wayPoints;
-        while(!wayPointsCopy.empty()) {
-
-            myfile<< wayPointsCopy.front().x<<' ';
-            myfile<< wayPointsCopy.front().y<<"\n";
-            wayPointsCopy.pop();
-        }
-        myfile.close();
-    }
     //////////////////////////////////////////////////////////
 }
 
@@ -293,36 +291,14 @@ void MainWindow::on_pushButton_4_clicked() //stop
 {
     //Vito
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////kde su
-    // planovanie v mape spravenej nami - treba poskusat
+    // planovanie v mape spravenej nami
     mutex.lock();
-    expandObstacles(map,map_x,map_y);
 
-    //getWayPoints(&map[0][0],map_x, map_y, 100, 100, 300.0, 350.0);
+    expandObstacles(map, map_x, map_y);
+    getWayPoints(map, map_x, map_y, 125.0, 150.0, 375.0, 250.0);
 
-    ofstream myfile ("mapaMap.txt");
-    if (myfile.is_open())
-    {
-        for(int i = 0;i<map_x; i++)
-        {
-            for(int j = 0; j<map_y;j++)
-            {
-                myfile << map[i][j];
-            }
-            myfile<<"\n";
-        }
+    printToFile("mapaMap.txt", map, map_x, map_y, true);
 
-        myfile<<"\n\nBODY:\n"<<' ';
-
-        queue<Point> wayPointsCopy = wayPoints;
-        while(!wayPointsCopy.empty()) {
-
-            myfile<< wayPointsCopy.front().x<<' ';
-            myfile<< wayPointsCopy.front().y<<"\n";
-            wayPointsCopy.pop();
-        }
-
-        myfile.close();
-    }
     mutex.unlock();
     /////////////////////////////////////////////////////////////////////////////
 
@@ -782,7 +758,7 @@ void MainWindow::processLocalization()
 }
 
 //ciel> ulozi do wayPoints body prechodu
-void MainWindow::getWayPoints(int* Map, int xSize, int ySize, double rx, double ry, double finX, double finY){
+void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double ry, double finX, double finY){
 
 
     queue<Point> pointsToEvaluate;
@@ -796,37 +772,42 @@ void MainWindow::getWayPoints(int* Map, int xSize, int ySize, double rx, double 
     int x = ((int)rx)/widthOfCell;
     int y = ((int)ry)/widthOfCell;
 
-    *(Map+x*xSize + y) = -1;
-    *(Map+(((int)pointFin.x)*xSize) + ((int)pointFin.y)) = 2;
+    //vyprazdni wayPoints
+    while(!wayPoints.empty()){
+        wayPoints.pop();
+    }
+
+
+    if (map[x][y] == 0 && map[(int)pointFin.x][(int)pointFin.y] == 0){
+        map[x][y] = -1;
+        map[(int)pointFin.x][(int)pointFin.y] = 2;
+    }
+    else{
+        std::cout<<"Moja pozicia alebo ciel v prekazke"<<endl;
+        return;
+    }
+
+
 
     pointsToEvaluate.push(pointFin);
 
+    //ohodnocuje postupne bunky kym nepride k -1
     while (!pointsToEvaluate.empty()){
 
         p = pointsToEvaluate.front();
         pointsToEvaluate.pop();
 
-        evaluateNeighbors(Map, xSize, ySize, &pointsToEvaluate,(int)p.x,(int)p.y);
+        evaluateNeighbors(map, xSize, ySize, &pointsToEvaluate,(int)p.x,(int)p.y);
 
-        if (*(Map+((int)p.x+1)*xSize+(int)p.y) == -1 || *(Map+((int)p.x+1)*xSize+(int)p.y+1) == -1 ||
-                *(Map+((int)p.x)*xSize+(int)p.y+1) == -1 || *(Map+((int)p.x-1)*xSize+(int)p.y+1) == -1 ||
-                *(Map+((int)p.x-1)*xSize+(int)p.y) == -1 || *(Map+((int)p.x-1)*xSize+(int)p.y-1) == -1 ||
-                *(Map+((int)p.x)*xSize+(int)p.y-1) == -1 || *(Map+((int)p.x+1)*xSize+(int)p.y-1) == -1 ){
+        if (foundFinish(map, p, xSize, ySize))
             break;
-        }
-
     }
 
-    //    while((*Map+(x+1)*xSize+y) != 2 /*&& (*Map+(x+1)*xSize+y+1) != 2*/ &&
-    //           (*Map+x*xSize+y+1) != 2 /*&& (*Map+(x-1)*xSize+y+1) != 2*/ &&
-    //           (*Map+(x-1)*xSize+y) != 2 /*&& (*Map+(x-1)*xSize+y-1) != 2*/ &&
-    //           (*Map+x*xSize+y-1) != 2 /*&& (*Map+(x+1)*xSize+y-1) != 2*/ ){
 
-    //    while((*Map+(x+1)*xSize+y) != 2 && (*Map+x*xSize+y+1) != 2 && (*Map+(x-1)*xSize+y) != 2 && (*Map+x*xSize+y-1) != 2 && (*Map+x*xSize+y) != 2){
-
+    //naplnuje body kadial treba ist
     while (1){
 
-        newDirection = setDirection(Map, xSize, ySize, x, y, oldDirection);
+        newDirection = setDirection(map, xSize, ySize, x, y, oldDirection);
 
         if (newDirection == 10){
             p.x = finX;
@@ -859,48 +840,49 @@ void MainWindow::getWayPoints(int* Map, int xSize, int ySize, double rx, double 
 }
 
 //urcite smer dalsieho pohybu // 1-vpravo 2-hore 3-vlavo 4-dole
-int MainWindow::setDirection(int* Map, int xSize, int ySize, int x, int y, int oldDirection){
+int MainWindow::setDirection(int** map, int xSize, int ySize, int x, int y, int oldDirection){
 
     int min = 1000000;
     int direction = 1;
 
 
-    if (x+1 < xSize && *(Map+(x+1)*xSize+y) > 1 && *(Map+(x+1)*xSize+y) <= min) {
+    if (x+1 < xSize && map[x+1][y] > 1 && map[x+1][y] <= min) {
 
-        min = *(Map+(x+1)*xSize+y);
+        min = map[x+1][y];
         direction = 1;
     }
-    if (x-1 > 0 && *(Map+(x-1)*xSize+y) > 1 &&  *(Map+(x-1)*xSize+y) <= min) {
+    if (x-1 > 0 && map[x-1][y] > 1 &&  map[x-1][y] <= min) {
 
-        if (*(Map+(x-1)*xSize+y) == min && oldDirection == 3){
+        if (map[x-1][y] == min && oldDirection == 3){
             direction = 3;
         }
-        else if (*(Map+(x-1)*xSize+y) < min){
-            min = *(Map+(x-1)*xSize+y);
+        else if (map[x-1][y] < min){
+            min = map[x-1][y];
             direction = 3;
         }
     }
-    if (y+1 < ySize && *(Map+x*xSize+y+1) > 1 && *(Map+x*xSize+y+1) <= min) {
+    if (y+1 < ySize && map[x][y+1] > 1 && map[x][y+1] <= min) {
 
-        if (*(Map+x*xSize+y+1) == min && oldDirection == 2){
+        if (map[x][y+1] == min && oldDirection == 2){
             direction = 2;
         }
-        else if (*(Map+x*xSize+y+1) < min){
-            min = *(Map+x*xSize+y+1);
+        else if (map[x][y+1] < min){
+            min = map[x][y+1];
             direction = 2;
         }
     }
-    if (y-1 > 0 && *(Map+x*xSize+y-1) > 1 && *(Map+x*xSize+y-1) <= min) {
+    if (y-1 > 0 && map[x][y-1] > 1 && map[x][y-1] <= min) {
 
-        if (*(Map+x*xSize+y-1) == min && oldDirection == 4){
+        if (map[x][y-1] == min && oldDirection == 4){
             direction = 4;
         }
-        else if (*(Map+x*xSize+y-1) < min){
-            min = *(Map+x*xSize+y-1);
+        else if (map[x][y-1] < min){
+            min = map[x][y-1];
             direction = 4;
         }
     }
 
+    //ked je v cieli
     if (min == 2)
         return 10;
 
@@ -908,30 +890,30 @@ int MainWindow::setDirection(int* Map, int xSize, int ySize, int x, int y, int o
 }
 
 //4-susedne ohodnotenie
-void MainWindow::evaluateNeighbors(int* Map,int xSize, int ySize, queue<Point>* pointsToEvaluate , int x, int y){
+void MainWindow::evaluateNeighbors(int** map,int xSize, int ySize, queue<Point>* pointsToEvaluate , int x, int y){
 
     Point p;
 
-    if (x+1 < xSize && *(Map+(x+1)*xSize+y) == 0 ) {
-        *(Map+(x+1)*xSize+y) = *(Map+x*xSize+y)+1;
+    if (x+1 < xSize && map[x+1][y] == 0 ) {
+        map[x+1][y] = map[x][y]+1;
         p.x = x+1;
         p.y = y;
         (*pointsToEvaluate).push(p);
     }
-    if (x-1 >= 0 && *(Map+(x-1)*xSize+y) == 0 ) {
-        *(Map+(x-1)*xSize+y) = *(Map+x*xSize+y)+1;
+    if (x-1 >= 0 && map[x-1][y] == 0 ) {
+        map[x-1][y] = map[x][y]+1;
         p.x = x-1;
         p.y = y;
         (*pointsToEvaluate).push(p);
     }
-    if (y+1 < ySize && *(Map+x*xSize+y+1) == 0 ) {
-        *(Map+x*xSize+y+1) = *(Map+x*xSize+y)+1;
+    if (y+1 < ySize && map[x][y+1] == 0 ) {
+        map[x][y+1] = map[x][y]+1;
         p.x = x;
         p.y = y+1;
         (*pointsToEvaluate).push(p);
     }
-    if (y-1 >= 0 && *(Map+x*xSize+y-1) == 0 ) {
-        *(Map+x*xSize+y-1) = *(Map+x*xSize+y)+1;
+    if (y-1 >= 0 && map[x][y-1] == 0 ) {
+        map[x][y-1] = map[x][y]+1;
         p.x = x;
         p.y = y-1;
         (*pointsToEvaluate).push(p);
@@ -940,12 +922,26 @@ void MainWindow::evaluateNeighbors(int* Map,int xSize, int ySize, queue<Point>* 
 }
 
 //prerobi mapu z TMapArea do podobz 2D pola
-void MainWindow::TMapAreaToArrayMap(){
+void MainWindow::fileToIdealArrayMap(char* filename){
 
-    mapLoader.load_map("priestor.txt",idealMap);
+    mapLoader.load_map(filename,idealMap);
 
     int x1,x2,y1,y2;
     int pred, po;
+
+    //alokuje idealnu mapu
+    idealArrayMap = new int*[120];
+
+    for(int i=0; i<120; i++)
+    {
+        idealArrayMap[i]=new int[120];
+
+        for(int j=0; j<120; j++)
+        {
+            idealArrayMap[i][j] = 0;
+        }
+    }
+
 
     //prepocita stenu dookola
     for (int i = 0; i < idealMap.wall.numofpoints; ++i) {
@@ -1045,24 +1041,28 @@ void MainWindow::TMapAreaToArrayMap(){
             }
         }
     }
+
+
+
+
 }
 
-void MainWindow::expandObstacles()
+void MainWindow::expandObstacles(int** map, int xSize, int ySize)
 {
     double robotRadius = 20.0; //cm
     int numOfExpandedCells = (int) (robotRadius/widthOfCell);
 
     //da 2 tam kde je okraj (rezerva)
-    for(int x = 0; x < map_x; x++){
+    for(int x = 0; x < xSize; x++){
 
-        for(int y = 0; y < map_y; y++){
+        for(int y = 0; y < ySize; y++){
 
             if (map[x][y] == 1){
 
                 for (int i = -numOfExpandedCells; i < numOfExpandedCells; i++){
                     for (int j = -numOfExpandedCells; j < numOfExpandedCells; j++){
 
-                        if (x+i < map_x && x+i > 0 && y+j < map_y && y+j > 0 &&  map[x+i][y+j] == 0)
+                        if (x+i < xSize && x+i > 0 && y+j < ySize && y+j > 0 &&  map[x+i][y+j] == 0)
                             map[x+i][y+j] = 2;
                     }
                 }
@@ -1072,9 +1072,9 @@ void MainWindow::expandObstacles()
 
 
     //spravi z 2 (okraje) 1, aby to bolo brane ako prekazka
-    for(int x = 0; x < map_x; x++){
+    for(int x = 0; x < xSize; x++){
 
-        for(int y = 0; y < map_y; y++){
+        for(int y = 0; y < ySize; y++){
 
             if (map[x][y] == 2)
                 map[x][y] = 1;
@@ -1083,104 +1083,10 @@ void MainWindow::expandObstacles()
 
 
 }
-//zvacsi prekazky o polomer robota
-void MainWindow::expandObstacles(int** Map, int xSize, int ySize){
-
-    double robotRadius = 20.0; //cm
-    int numOfExpandedCells = (int) (robotRadius/widthOfCell);
-
-
-    //da 2 tam kde je okraj (rezerva)
-    for(int x = 0; x < xSize; x++){
-
-        for(int y = 0; y < ySize; y++){
-
-            if (Map[x][y] == 1){
-
-                for (int i = -numOfExpandedCells; i < numOfExpandedCells; i++){
-                    for (int j = -numOfExpandedCells; j < numOfExpandedCells; j++){
-
-                        if (x+i < xSize && x+i > 0 && y+j < ySize && y+j > 0 && Map[x+i][y+j] == 0)
-                            Map[x+i][y+j] = 2;
-                    }
-                }
-            }
-        }
-    }
 
 
 
-    /*
 
-    //da 2 tam kde je okraj (rezerva)
-    for(int x = 0; x < xSize; x++){
-
-        for(int y = 0; y < ySize; y++){
-
-            if (**(Map+x*xSize+y) == 1){
-
-                for (int i = -numOfExpandedCells; i < numOfExpandedCells; i++){
-                    for (int j = -numOfExpandedCells; j < numOfExpandedCells; j++){
-
-                        if (x+i < xSize && x+i > 0 && y+j < ySize && y+j > 0 && **(Map+(x+i)*xSize+y+j) == 0)
-                            **(Map+(x+i)*xSize+y+j) = 2;
-                    }
-                }
-            }
-        }
-    }
-
-    //spravi z 2 (okraje) 1, aby to bolo brane ako prekazka
-    for(int x = 0; x < xSize; x++){
-
-        for(int y = 0; y < ySize; y++){
-
-            if (**(Map+x*xSize+y) == 2)
-                **(Map+x*xSize+y) = 1;
-        }
-    }
-    */
-}
-
-
-
-/*
-//zvacsi prekazky o polomer robota
-void MainWindow::expandObstacles(int xSize, int ySize){
-
-    double robotRadius = 20.0; //cm
-    int numOfExpandedCells = (int) (robotRadius/widthOfCell);
-
-
-    //da 2 tam kde je okraj (rezerva)
-    for(int x = 0; x < xSize; x++){
-
-        for(int y = 0; y < ySize; y++){
-
-            if (idealArrayMap[x][y] == 1){
-
-                for (int i = -numOfExpandedCells; i < numOfExpandedCells; i++){
-                    for (int j = -numOfExpandedCells; j < numOfExpandedCells; j++){
-
-                        if (x+i < xSize && x+i > 0 && y+j < ySize && y+j > 0 && idealArrayMap[x+i][y+j] == 0)
-                            idealArrayMap[x+i][y+j] = 2;
-                    }
-                }
-            }
-        }
-    }
-
-    //spravi z 2 (okraje) 1, aby to bolo brane ako prekazka
-    for(int x = 0; x < xSize; x++){
-
-        for(int y = 0; y < ySize; y++){
-
-            if (idealArrayMap[x][y] == 2)
-                idealArrayMap[x][y] = 1;
-        }
-    }
-}
-*/
 
 //cita data z robota v casovej vzorke
 void MainWindow::readRobotSynch()
@@ -1324,34 +1230,19 @@ void MainWindow::saveMap()
         map[i]=new int[map_y];
     }
 
-    ofstream myfile1 ("mapa.txt");
-    if(myfile1.is_open())
+    for(int i=0;i<map_x;i++)
     {
-        for(int i=0;i<map_x;i++)
+        for(int j=0;j<map_y;j++)
         {
-            for(int j=0;j<map_y;j++)
-            {
-                myfile1<<glob_map[x_first+i][y_first+j];
-                map[i][j]=glob_map[x_first+i][y_first+j];
-            }
-            myfile1<<"\n";
+            map[i][j]=glob_map[x_first+i][y_first+j];
         }
-        myfile1.close();
     }
 
-    ofstream myfile ("mapa_cela.txt");
-    if (myfile.is_open())
-    {
-        for(int i = 0;i<240; i++)
-        {
-            for(int j = 0; j<240;j++)
-            {
-                myfile << glob_map[i][j];
-            }
-            myfile<<"\n";
-        }
-        myfile.close();
-    }
+
+    printToFile("mapa.txt", map, map_x, map_y, false);
+
+    printToFile("mapa_cela.txt", glob_map, 240, 240 , false);
+
 }
 
 //deteguj prekazky a najdi cestu
@@ -1405,4 +1296,75 @@ void MainWindow::findWay(LaserMeasurement &laserData)
 //        if(y_gi>239)
 //            y_gi=239;
  //   }
+}
+
+void MainWindow::printToFile(char* file,int** map, int xSize, int ySize, bool points){
+
+    ofstream myfile (file);
+    if (myfile.is_open())
+    {
+        for(int i = 0;i<xSize; i++)
+        {
+            for(int j = 0; j<ySize;j++)
+            {
+                myfile << map[i][j]<<' ';
+            }
+            myfile<<";"<<"\n";
+        }
+
+        if (points)
+        {
+            myfile<<"\n\nBODY:\n"<<' ';
+            queue<Point> wayPointsCopy = wayPoints;
+            while(!wayPointsCopy.empty()) {
+
+                myfile<< wayPointsCopy.front().x<<' ';
+                myfile<< wayPointsCopy.front().y<<"\n";
+                wayPointsCopy.pop();
+            }
+        }
+        myfile.close();
+    }
+}
+
+
+
+bool MainWindow::foundFinish(int** map, Point p, int xSize, int ySize){
+
+    if ((int)p.x+1 < xSize){
+        if (map[(int)p.x+1][(int)p.y] == -1)
+            return true;
+    }
+    if ((int)p.x-1 > 0){
+        if (map[(int)p.x-1][(int)p.y] == -1)
+            return true;
+    }
+    if ((int)p.y+1 < ySize){
+        if (map[(int)p.x][(int)p.y+1] == -1)
+            return true;
+    }
+    if ((int)p.y-1 > 0){
+        if (map[(int)p.x][(int)p.y-1] == -1)
+            return true;
+    }
+
+
+    if ((int)p.x+1 < xSize && (int)p.y+1 < ySize){
+        if (map[(int)p.x+1][(int)p.y+1] == -1)
+            return true;
+    }
+    if ((int)p.x+1 < xSize && (int)p.y-1 > 0){
+        if (map[(int)p.x+1][(int)p.y-1] == -1)
+            return true;
+    }
+    if ((int)p.x-1 > 0 && (int)p.y+1 < ySize){
+        if (map[(int)p.x-1][(int)p.y+1] == -1)
+            return true;
+    }
+    if ((int)p.x-1 > 0 && (int)p.y-1 > 0){
+        if (map[(int)p.x-1][(int)p.y-1] == -1)
+            return true;
+    }
+    return false;
+
 }
