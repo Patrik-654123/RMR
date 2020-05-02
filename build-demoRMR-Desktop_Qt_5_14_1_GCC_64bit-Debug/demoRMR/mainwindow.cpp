@@ -83,6 +83,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2
         }
 
+        //globalna mapa
         int xMap,yMap;
         for(int x = 0;x<240;x++)
         {
@@ -98,14 +99,15 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
         painter.setPen(pero1);
 
+        //ciel
         xMap=rect2.topLeft().x()+((int)(rrx*1000)/50);
         yMap=rect2.topLeft().y()+((int)(rry*1000)/50);
         painter.drawEllipse(QPoint(xMap, yMap),1,1);
-
+        //robot
         xMap=rect2.topLeft().x()+((int)(rx*1000)/50);
         yMap=rect2.topLeft().y()+((int)(ry*1000)/50);
         painter.drawEllipse(QPoint(xMap, yMap),1,1);
-
+        //prechody
         painter.setPen(pero2);
         while(!passages.empty())
         {
@@ -142,40 +144,6 @@ void MainWindow::processThisRobot()
         robotdata.robotReqAngle=0;
         robotdata.robotRadius=0;
     }
-
-    /*
-    if((robotdata.robotReqSpeed != robotdata.robotSpeed)&& datacounter%5==0)
-    {
-        //setSpeed();
-        //setRampSpeed();
-    }
-    */
-    /*
-    if(robotdata.robotFi != robotdata.robotReqAngle )
-    {
-        if(!robotdata.clockWiseLock)
-        {
-           robotdata.clockWise = abs(((int)robotdata.robotReqAngle % 360)-((int)(robotdata.robotFiDeg) % 360)) < 180;
-           robotdata.clockWiseLock = true;
-        }
-
-        setAngle(robotdata.clockWise);
-    }
-    */
-    /*
-    ///Nova funkcia na polohovanie uhla
-    if(!robotdata.robotRotated && datacounter % 5 == 0)
-    {
-       setAngle();
-    }
-    */
-    /*
-    ///Funkcia prihodu na poziciu
-    if(robotdata.robotRotated && datacounter % 10 == 0)
-    {
-      getPossition();
-    }
-    */
 
     //Fukncia lokalizacie
     processLocalization();
@@ -256,8 +224,6 @@ void MainWindow::on_pushButton_9_clicked() //start button
         }
 
     }
-
-
 
 
     //Vito
@@ -499,106 +465,7 @@ void MainWindow::robotprocess()
     }
 }
 
-/*
-//Funkcia nastavenie rychlosti po S-krivke
-void MainWindow::setSpeed()
-{
-    static double x;
-    static int k;
 
-    if(robotdata.speedSample<=0)
-    {
-        k=(29900-40*robotdata.robotReqSpeed)/590;
-        x=(60+0.3*abs(robotdata.robotSpeed-robotdata.robotReqSpeed))/300;
-        robotdata.robotTMpSpeed=robotdata.robotSpeed;
-        std::cout<<"robot rychlost::"<<robotdata.robotTMpSpeed<<"  cas regulacie: "<<x<<"  zosilnenie: "<<k<<endl;
-    }
-
-    if(robotdata.robotReqSpeed > robotdata.robotSpeed)
-    {
-        robotdata.robotSpeed=robotdata.robotTMpSpeed+abs(robotdata.robotReqSpeed-robotdata.robotTMpSpeed)/(1+exp(-k*(robotdata.speedSample-(x/2.0))));
-    }
-    if(robotdata.robotReqSpeed < robotdata.robotSpeed)
-    {
-        robotdata.robotSpeed= robotdata.robotTMpSpeed-1*abs(robotdata.robotReqSpeed-robotdata.robotTMpSpeed)/(1+exp(-k*(robotdata.speedSample-(x/2.0))));
-    }
-
-    robotdata.speedSample=robotdata.speedSample+speedStep;
-
-    std::cout<<"rychlost= "<<robotdata.robotSpeed<<endl;
-
-    std::vector<unsigned char> mess=robot.setTranslationSpeed(robotdata.robotSpeed);
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
-
-    if(robotdata.speedSample>=x)
-    {
-        robotdata.robotSpeed=robotdata.robotReqSpeed;
-        robotdata.speedSample=0;
-    }
-}
-//funkcia nastavenie rychlosti po rampe
-void MainWindow::setRampSpeed()
-{
-    if(robotdata.robotSpeed<robotdata.robotReqSpeed && (robotdata.robotSpeed+5)<robotdata.robotReqSpeed)
-    {
-        robotdata.robotSpeed=robotdata.robotSpeed+5;
-    }else if(robotdata.robotSpeed>robotdata.robotReqSpeed && (robotdata.robotSpeed-5)>robotdata.robotReqSpeed)
-    {
-        robotdata.robotSpeed=robotdata.robotSpeed-5;
-    }else
-    {
-        robotdata.robotSpeed=robotdata.robotReqSpeed;
-    }
-
-    std::cout<<"rychlost= "<<robotdata.robotSpeed<<endl;
-    std::vector<unsigned char> mess=robot.setTranslationSpeed(robotdata.robotSpeed);
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
-}
-//fukcia nastavenie uhla
-void MainWindow::setAngle(bool clockwise)
-{
-
-    int angleDif = (abs((int)robotdata.robotReqAngle-((int)(robotdata.robotFiDeg) % 360)))%360;
-
-    if(!clockwise)
-        angleDif =360-angleDif;
-
-    std::cout<<"dif "<<angleDif<<endl;
-    if(angleDif>5)
-    {
-        double maxRotSpeed= robotdata.clockWise ? PI/2 : -PI/2;
-        double K = maxRotSpeed/100.0;
-        double reqRotSpeed = K*angleDif;
-        double step = 0.04;
-
-        std::cout<<"required speed regulator: "<<reqRotSpeed<<endl;
-
-
-        //rozbehni po rampe
-        if (abs(reqRotSpeed) > abs(robotdata.robotReqRotSpeed)){
-
-            if (robotdata.clockWise)
-                robotdata.robotReqRotSpeed += step;
-            else
-                robotdata.robotReqRotSpeed -= step;
-        }
-        //doreguluj pomocou regulatora, resp. ak regulator vypocital mensi akcny zasa ako je rampa t.j. reglacna odchylka sa zmensuje
-        else
-            robotdata.robotReqRotSpeed=reqRotSpeed;
-        //obmedzenie max rychlosti
-        if (abs(robotdata.robotReqRotSpeed) > abs(maxRotSpeed))
-            robotdata.robotReqRotSpeed = maxRotSpeed;
-    }
-    else
-    {
-        robotdata.robotReqRotSpeed=0;  //robot dosiahol natocenie
-
-    }
-    std::cout<<"actual robot speed: "<<robotdata.robotReqRotSpeed<<endl;
-
-    std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
-    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}}
-*/
 //funkcia na polohovanie
 void MainWindow::getPossition()
 {
@@ -776,9 +643,7 @@ void MainWindow::processLocalization()
     rry=robotdata.robotReqY;
     rfi=robotdata.robotFi;
     mutex.unlock();
-
 }
-
 //ciel> ulozi do wayPoints body prechodu
 void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double ry, double finX, double finY){
 
@@ -1063,10 +928,6 @@ void MainWindow::fileToIdealArrayMap(char* filename){
             }
         }
     }
-
-
-
-
 }
 
 //rozsirenie prekazky v mape
@@ -1259,6 +1120,13 @@ void MainWindow::saveMap()
 
     printToFile("mapa.txt", map, map_x, map_y, false);
     printToFile("mapa_cela.txt", glob_map, 240, 240 , false);
+
+    // dealokuj globalnu mapu
+    for( int i = 0 ; i < 240 ; i++ )
+    {
+        delete[] glob_map[i];
+    }
+    delete[] glob_map;
 }
 
 //deteguj prekazky

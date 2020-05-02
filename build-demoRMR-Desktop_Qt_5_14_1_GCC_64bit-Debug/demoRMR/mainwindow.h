@@ -38,29 +38,24 @@ public:
     void processThisLidar(LaserMeasurement &laserData);
     void processThisRobot();
 
-    //PATO
-    //lokalizacia
+    //uloha1
     void processLocalization();
-    void setSpeed();
-    void setRampSpeed();
-    void setAngle(bool clockwise);
     void setAngle();
     void getPossition();
 
-    //PATO
     //uloha2
     void findWay(LaserMeasurement &laserData);
     void findPassages(LaserMeasurement &laserData);
     void checkPassages(LaserMeasurement &laserData);
     void chosePassage();
 
-    //PATO uloha3 aj uloha1
+    //uloha3 a uloha1
     void readLidarSynch();
     void readRobotSynch();
     void writeMap(LaserMeasurement &laserData);
     void saveMap();
 
-    //VITO uloha4
+    //uloha4
     void getWayPoints(int** map, int xSize, int ySize, double rx, double ry, double finX, double finY);
     void fileToIdealArrayMap(char *filename);
     void evaluateNeighbors(int** map, int xSize, int ySize, queue<Point>* pointsToEvaluate, int x, int y);
@@ -128,15 +123,13 @@ private:
      CKobuki robot;
      TKobukiData robotdata;
 
-     //PATO uloha 2.
+     //uloha 2.
      queue<pair<double,double>> passages;
-
      double b = 0.3;
 
-     //PATO uloha 1. 3.
+     //uloha 1. 3.
      CKobukiTxtData robotTxt;
      KobukiData robotTxtData;
-
      rplidarTxt lidarTxtData;
      LaserMeasurementTxt copyOfLaserTxtData;
      clock_t t_offset;
@@ -144,7 +137,6 @@ private:
      int** glob_map;
      int** map;
      int map_x,map_y;
-
 
      //uloha 4
      map_loader mapLoader;
