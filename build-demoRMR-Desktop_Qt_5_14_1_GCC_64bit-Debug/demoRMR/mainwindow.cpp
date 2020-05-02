@@ -11,12 +11,10 @@
 #include <iostream>
 #include <fstream>
 
-///TOTO JE DEMO PROGRAM... NEPREPISUJ NIC,ALE SKOPIRUJ SI MA NIEKAM DO INEHO FOLDERA
-/// NASLEDNE V POLOZKE Projects SKONTROLUJ CI JE VYPNUTY shadow build...
-///Patrik Herctu, Viktor Luckanic
+
+///Patrik Hercut, Viktor Luckanic
 ///projek RMR
-///
-///
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1159,7 +1157,6 @@ void MainWindow::findWay(LaserMeasurement &laserData)
         {
             if((abs(crit_dist) >= scan_dist && abs(crit_dist) <= dist ) || scan_dist < dist)
             {
-                std::cout<<"COLISION! scan angle: "<<angle<<" crit dist: "<<abs(crit_dist)<<" scan dist: "<<scan_dist<<" robot dist: "<<dist<<endl;
                 colision=true;
                 break;
             }
@@ -1253,7 +1250,6 @@ void MainWindow::checkPassages(LaserMeasurement &laserData)
             {
                 if((abs(crit_dist) >= scan_dist && abs(crit_dist) <= dist ) || scan_dist < dist)
                 {
-                    std::cout<<"COLISION tmp! scan angle: "<<angle<<" crit dist: "<<abs(crit_dist)<<" scan dist: "<<scan_dist<<" robot dist: "<<dist<<endl;
                     colision=true;
                     break;
                 }
@@ -1323,7 +1319,7 @@ void MainWindow::printToFile(char* file,int** map, int xSize, int ySize, bool po
     }
 }
 
-//
+//zplav. algoritmus ukoncovacia podmienka
 bool MainWindow::foundFinish(int** map, Point p, int xSize, int ySize){
 
     if ((int)p.x+1 < xSize){
