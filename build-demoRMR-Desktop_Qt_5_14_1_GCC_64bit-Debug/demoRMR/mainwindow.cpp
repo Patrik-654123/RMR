@@ -46,12 +46,20 @@ void MainWindow::paintEvent(QPaintEvent *event)
     pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
     pero.setWidth(3);//hrubka pera -3pixely
     pero.setColor(Qt::green);//farba je zelena
+
+    QPen pero1;
+    pero1.setWidth(4);
+    pero1.setColor(Qt::red);
+
+    QPen pero2;
+    pero2.setWidth(3);
+    pero2.setColor(Qt::blue);
+
+
     QRect rect;//(20,120,700,500);
     QRect rect2;
     rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
     rect2=ui->frame_2->geometry();
-
-
 
     painter.drawRect(rect);//vykreslite stvorec
     painter.drawRect(rect2);
@@ -80,19 +88,36 @@ void MainWindow::paintEvent(QPaintEvent *event)
         {
             for(int y = 0; y<240;y++)
             {
-
                 if(glob_map[x][y]==1)
                 {
-                    xMap=rect2.bottomLeft().x()+x;
-                    yMap=rect2.bottomLeft().y()-y;
+                    xMap=rect2.topLeft().x()+x;
+                    yMap=rect2.topLeft().y()+y;
                     painter.drawEllipse(QPoint(xMap, yMap),1,1);
                 }
             }
         }
+        painter.setPen(pero1);
+
+        xMap=rect2.topLeft().x()+((int)(rrx*1000)/50);
+        yMap=rect2.topLeft().y()+((int)(rry*1000)/50);
+        painter.drawEllipse(QPoint(xMap, yMap),1,1);
+
+        xMap=rect2.topLeft().x()+((int)(rx*1000)/50);
+        yMap=rect2.topLeft().y()+((int)(ry*1000)/50);
+        painter.drawEllipse(QPoint(xMap, yMap),1,1);
+
+        painter.setPen(pero2);
+        while(!passages.empty())
+        {
+            xMap=rect2.topLeft().x()+((int)(passages.front().first/50));
+            yMap=rect2.topLeft().y()+((int)(passages.front().second/50));
+            painter.drawEllipse(QPoint(xMap, yMap),1,1);
+            passages.pop();
+        }
+
         mutex.unlock();//unlock..skoncil som
     }
 }
-
 
 void MainWindow::processThisRobot()
 {
@@ -105,9 +130,9 @@ void MainWindow::processThisRobot()
 
         //other starting values
         robotdata.robotX=6;
-        robotdata.robotReqX=1;
+        robotdata.robotReqX=8.5;
         robotdata.robotY=6;
-        robotdata.robotReqY=1;
+        robotdata.robotReqY=7.5;
 
         robotdata.robotReqSpeed=0;
         robotdata.robotSpeed=0;
@@ -189,7 +214,6 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
 
     //zapis scan do mapy
     writeMap(laserData);
-
     //najdi prekazky
     findWay(laserData);
 
@@ -197,8 +221,6 @@ void MainWindow::processThisLidar(LaserMeasurement &laserData)
     mutex.unlock();//skoncil som
     update();//tento prikaz je vlastne signal, ktory prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
 }
-
-
 
 void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 {
@@ -766,8 +788,8 @@ void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double
     int newDirection;
     int oldDirection = 0;
 
-    pointFin.x = ((int)finX)/widthOfCell;
-    pointFin.y = ((int)finY)/widthOfCell;
+    pointFin.x = (finX)/widthOfCell;
+    pointFin.y = (finY)/widthOfCell;
 
     int x = ((int)rx)/widthOfCell;
     int y = ((int)ry)/widthOfCell;
@@ -1047,6 +1069,7 @@ void MainWindow::fileToIdealArrayMap(char* filename){
 
 }
 
+//rozsirenie prekazky v mape
 void MainWindow::expandObstacles(int** map, int xSize, int ySize)
 {
     double robotRadius = 20.0; //cm
@@ -1084,11 +1107,7 @@ void MainWindow::expandObstacles(int** map, int xSize, int ySize)
 
 }
 
-
-
-
-
-//cita data z robota v casovej vzorke
+//citanie data z robota v casovej vzorke
 void MainWindow::readRobotSynch()
 {
     //casova synchronizacia
@@ -1124,7 +1143,7 @@ void MainWindow::readRobotSynch()
     //textovy dokument precitany
 }
 
-//cita data z lidaru v casovej vzorke
+//citanie data z lidaru v casovej vzorke
 void MainWindow::readLidarSynch()
 {
     //casova synchronizacia
@@ -1165,7 +1184,7 @@ void MainWindow::readLidarSynch()
     }
 }
 
-//zapis snimku do globalnej mapy
+//zapis snimky lidaru do globalnej mapy
 void MainWindow::writeMap(LaserMeasurement &laserData)
 {
     //if(robotdata.lidarScan){
@@ -1211,7 +1230,7 @@ void MainWindow::saveMap()
 
             if(glob_map[i][j] == 1 && y_first == 0)
                 y_first=j;
-             else if(glob_map[i][j] == 1 && y_first > j)
+            else if(glob_map[i][j] == 1 && y_first > j)
                 y_first=j;
 
             if(glob_map[i][j] == 1 && y_last < j)
@@ -1222,7 +1241,7 @@ void MainWindow::saveMap()
     map_x = x_last-x_first;
     map_y = y_last-y_first;
 
-    //alokuj mapu
+    //alokuj mapu a napln orezanu mapu
     map = new int*[map_x];
 
     for(int i=0;i<map_x;i++)
@@ -1238,66 +1257,175 @@ void MainWindow::saveMap()
         }
     }
 
-
     printToFile("mapa.txt", map, map_x, map_y, false);
-
     printToFile("mapa_cela.txt", glob_map, 240, 240 , false);
-
 }
 
-//deteguj prekazky a najdi cestu
+//deteguj prekazky
 void MainWindow::findWay(LaserMeasurement &laserData)
 {
-    double x_gi,y_gi,angle;
-    double b=0.4;
-    double crit_dist;
+    double angle,crit_dist,scan_dist;
     double dist=sqrt(pow(rx-rrx,2.0)+pow(ry-rry,2.0));
+    double alfa=atan2(rry-ry,rrx-rx);
+    double alfa_z=atan(b/dist);
 
-    double alfa=atan2(rry-ry,rrx-rx)-rfi;
+    double start_zone=rfi*(180/PI)-(alfa+alfa_z)*(180/PI);
+    if (start_zone<0)
+        start_zone=360+start_zone;
+    if (start_zone>=360)
+        start_zone=start_zone-360;
 
-    if(alfa<0)
-        alfa=2*PI+alfa;
+    double stop_zone=start_zone+(2*alfa_z*(180/PI));
+    if(stop_zone > 360)
+        stop_zone=stop_zone-360;
 
-    double start_angle=alfa-(PI/2);
-    if (start_angle<0)
-        start_angle=2*PI+start_angle;
+    //Over ci prichadza ku kolizii
+    bool colision=false;
+    for (int i=0;i<laserData.numberOfScans;i++)
+    {
+        angle=laserData.Data[i].scanAngle;
+        crit_dist= b/cos(angle*(PI/180));
+        scan_dist= laserData.Data[i].scanDistance/1000;
+        if((start_zone < stop_zone && angle >= start_zone && angle <= stop_zone)||
+                (start_zone > stop_zone && (angle >= start_zone || angle <= stop_zone)))
+        {
+            if((abs(crit_dist) >= scan_dist && abs(crit_dist) <= dist ) || scan_dist < dist)
+            {
+                std::cout<<"COLISION! scan angle: "<<angle<<" crit dist: "<<abs(crit_dist)<<" scan dist: "<<scan_dist<<" robot dist: "<<dist<<endl;
+                colision=true;
+                break;
+            }
+        }
+    }
 
-    double stop_angle=alfa+(PI/2);
-    if(stop_angle > 2*PI)
-            stop_angle=stop_angle-2*PI;
+    if(colision)
+    {
+        //Najdi prechody
+        findPassages(laserData);
+        //Over prechody
+        checkPassages(laserData);
+        //Vyber prechod
+        chosePassage();
+    }
+}
+
+//najdi prechody
+void MainWindow::findPassages(LaserMeasurement &laserData)
+{
+    double dist,dist_b,scan_dist,angle,alfa;
+    double scan_dist_1=laserData.Data[0].scanDistance;
+    double x_pr,y_pr;
 
     for (int i=0;i<laserData.numberOfScans;i++)
     {
-          angle=(laserData.Data[i].scanAngle*(PI/180));
-         if(start_angle <= angle && angle <= stop_angle)
-         {
+        if(abs(scan_dist_1-laserData.Data[i].scanDistance) > 2*b*1000)
+        {
+            angle=rfi-(laserData.Data[i].scanAngle*(PI/180));
+            scan_dist= laserData.Data[i].scanDistance;
+            if( scan_dist_1 < scan_dist)
+            {
+                dist=(scan_dist+(scan_dist_1-scan_dist)/2);
+                x_pr=(rx*1000)+dist*cos(angle);
+                y_pr=(ry*1000)+dist*sin(angle);
 
-          std::cout<<"start angle "<<start_angle*(180/PI)<<" measure angle "<<angle*(180/PI)<< " stop angle "<<stop_angle*(180/PI)<<endl;
-         }
+                alfa=atan(b*1000/dist);
+                dist_b=(b*1000)/sin(alfa);
+
+                x_pr=(rx*1000)+dist_b*cos(angle-alfa);
+                y_pr=(ry*1000)+dist_b*sin(angle-alfa);
+            }else if (scan_dist_1 >= scan_dist)
+            {
+                dist=(scan_dist+(scan_dist_1-scan_dist)/2);
+                x_pr=(rx*1000)+dist*cos(angle);
+                y_pr=(ry*1000)+dist*sin(angle);
+
+                alfa=atan(b*1000/dist);
+                dist_b=(b*1000)/sin(alfa);
+
+                x_pr=(rx*1000)+dist_b*cos(angle+alfa);
+                y_pr=(ry*1000)+dist_b*sin(angle+alfa);
+            }
+            passages.push(make_pair(x_pr,y_pr));
+        }
+        scan_dist_1=laserData.Data[i].scanDistance;
     }
-
-
-
-//    for (int i=0;i<laserData.numberOfScans;i++)
-//    {
-//        angle=rfi-(laserData.Data[i].scanAngle*(PI/180)); //Pri sumulatore +
-
-//        x_gi=(rx*1000)+laserData.Data[i].scanDistance*cos(angle);
-//        y_gi=(ry*1000)+laserData.Data[i].scanDistance*sin(angle);
-
-
-//        std::cout<<i<<" alfa "<<angle*(180/PI)<<" d_crit "<<b/sin(laserData.Data[i].scanAngle*(PI/180))<<endl;
-
-//        x_gi=x_gi/50;
-//        y_gi=y_gi/50;
-
-//        if(x_gi>239)
-//            x_gi=239;
-//        if(y_gi>239)
-//            y_gi=239;
- //   }
 }
 
+//over prechody
+void MainWindow::checkPassages(LaserMeasurement &laserData)
+{
+    queue<pair<double,double>> pass_tmp;
+    double angle,crit_dist,scan_dist,dist,alfa,alfa_z;
+
+    while(!passages.empty())
+    {
+        dist=sqrt(pow(rx-(passages.front().first/1000),2.0)+pow(ry-(passages.front().second)/1000,2.0));
+        alfa=atan2((passages.front().second/1000)-ry,(passages.front().first/1000)-rx);
+        alfa_z=atan(b/dist);
+
+        double start_zone=rfi*(180/PI)-(alfa+alfa_z)*(180/PI);
+        if (start_zone<0)
+            start_zone=360+start_zone;
+        if (start_zone>=360)
+            start_zone=start_zone-360;
+
+        double stop_zone=start_zone+(2*alfa_z*(180/PI));
+        if(stop_zone > 360)
+            stop_zone=stop_zone-360;
+
+        //Over ci prichadza ku kolizii
+        bool colision=false;
+        for (int i=0;i<laserData.numberOfScans;i++)
+        {
+            angle=laserData.Data[i].scanAngle;
+            crit_dist= b/cos(angle*(PI/180));
+            scan_dist= laserData.Data[i].scanDistance/1000;
+            if((start_zone < stop_zone && angle >= start_zone && angle <= stop_zone)||
+               (start_zone > stop_zone && (angle >= start_zone || angle <= stop_zone)))
+            {
+                if((abs(crit_dist) >= scan_dist && abs(crit_dist) <= dist ) || scan_dist < dist)
+                {
+                    std::cout<<"COLISION tmp! scan angle: "<<angle<<" crit dist: "<<abs(crit_dist)<<" scan dist: "<<scan_dist<<" robot dist: "<<dist<<endl;
+                    colision=true;
+                    break;
+                }
+            }
+        }
+        if(!colision)
+        {
+            pass_tmp.push((passages.front()));
+        }
+        passages.pop();
+    }
+    passages=pass_tmp;
+}
+
+//vyber prechod
+void MainWindow::chosePassage()
+{
+  pair<double,double> pass_tmp;
+  double dist,dist_best,pass_x,pass_y;
+  pass_x=(passages.front().first)/1000;
+  pass_y=(passages.front().second)/1000;
+  dist_best=sqrt(pow(rx-pass_x,2.0)+pow(ry-pass_y,2.0))+sqrt(pow(pass_x-rrx,2.0)+pow(pass_y-rry,2.0));
+  pass_tmp=passages.front();
+  passages.pop();
+  while(!passages.empty())
+  {
+      pass_x=(passages.front().first)/1000;
+      pass_y=(passages.front().second)/1000;
+      dist=sqrt(pow(rx-pass_x,2.0)+pow(ry-pass_y,2.0))+sqrt(pow(pass_x-rrx,2.0)+pow(pass_y-rry,2.0));
+      if(dist<dist_best)
+      {
+          pass_tmp=passages.front();
+          dist_best=dist;
+      }
+      passages.pop();
+  }
+  passages.push(pass_tmp);
+}
+
+//zapis do textoveho suboru
 void MainWindow::printToFile(char* file,int** map, int xSize, int ySize, bool points){
 
     ofstream myfile (file);
@@ -1327,8 +1455,7 @@ void MainWindow::printToFile(char* file,int** map, int xSize, int ySize, bool po
     }
 }
 
-
-
+//
 bool MainWindow::foundFinish(int** map, Point p, int xSize, int ySize){
 
     if ((int)p.x+1 < xSize){

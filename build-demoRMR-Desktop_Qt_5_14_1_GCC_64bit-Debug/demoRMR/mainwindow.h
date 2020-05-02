@@ -50,6 +50,9 @@ public:
     //PATO
     //uloha2
     void findWay(LaserMeasurement &laserData);
+    void findPassages(LaserMeasurement &laserData);
+    void checkPassages(LaserMeasurement &laserData);
+    void chosePassage();
 
     //PATO uloha3 aj uloha1
     void readLidarSynch();
@@ -64,6 +67,7 @@ public:
     int setDirection(int** map, int xSize, int ySize, int x, int y, int oldDirection);
     void expandObstacles(int** map,int xSize, int ySize);
     bool foundFinish(int** map, Point p, int xSize, int ySize);
+
 
     void printToFile(char* file,int** map, int xSize, int ySize, bool points);
 
@@ -123,6 +127,11 @@ private:
      std::string ipaddress;
      CKobuki robot;
      TKobukiData robotdata;
+
+     //PATO uloha 2.
+     queue<pair<double,double>> passages;
+
+     double b = 0.3;
 
      //PATO uloha 1. 3.
      CKobukiTxtData robotTxt;
