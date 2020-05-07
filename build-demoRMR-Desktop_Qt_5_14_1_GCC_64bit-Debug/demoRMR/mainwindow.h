@@ -44,10 +44,10 @@ public:
     void getPossition();
 
     //uloha2
-    void findWay(LaserMeasurement &laserData);
-    void findPassages(LaserMeasurement &laserData);
-    void checkPassages(LaserMeasurement &laserData);
-    void chosePassage();
+    void checkWay(LaserMeasurement &laserData);
+    void findTransitions(LaserMeasurement &laserData);
+    void checkTransitions(LaserMeasurement &laserData);
+    void choseTransition();
 
     //uloha3 a uloha1
     void readLidarSynch();
@@ -56,15 +56,15 @@ public:
     void saveMap();
 
     //uloha4
-    void getWayPoints(int** map, int xSize, int ySize, double rx, double ry, double finX, double finY);
+    void getWayPoints(int** mapa, int xSize, int ySize, double rx, double ry, double finX, double finY);
     void fileToIdealArrayMap(char *filename);
-    void evaluateNeighbors(int** map, int xSize, int ySize, queue<Point>* pointsToEvaluate, int x, int y);
-    int setDirection(int** map, int xSize, int ySize, int x, int y, int oldDirection);
-    void expandObstacles(int** map,int xSize, int ySize);
-    bool foundFinish(int** map, Point p, int xSize, int ySize);
+    void evaluateNeighbors(int** mapa, int xSize, int ySize, queue<Point>* pointsToEvaluate, int x, int y);
+    int setDirection(int** mapa, int xSize, int ySize, int x, int y, int oldDirection);
+    void expandObstacles(int** mapa,int xSize, int ySize);
+    bool foundFinish(int** mapa, Point p, int xSize, int ySize);
 
-
-    void printToFile(char* file,int** map, int xSize, int ySize, bool points);
+    //uloha3 uloha4
+    void printToFile(char* file,int** mapa, int xSize, int ySize, bool points);
 
 
     pthread_t robotthreadHandle; // handle na vlakno
@@ -96,23 +96,19 @@ public:
 
     QMutex mutex;
 private slots:
-    void on_pushButton_9_clicked();
 
-    void on_pushButton_2_clicked();
-
-    void on_pushButton_3_clicked();
-
-    void on_pushButton_6_clicked();
-
-    void on_pushButton_5_clicked();
-
-    void on_pushButton_4_clicked();
-
+    //call back funkcie
     void on_pushButton_clicked();
-
-    void on_pushButton_10_clicked();
-
+    void on_pushButton_2_clicked();
+    void on_pushButton_3_clicked();
+    void on_pushButton_4_clicked();
+    void on_pushButton_5_clicked();
+    void on_pushButton_6_clicked();
     void on_pushButton_7_clicked();
+    void on_pushButton_8_clicked();
+    void on_pushButton_9_clicked();
+    void on_pushButton_10_clicked();
+    void on_pushButton_11_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -124,7 +120,7 @@ private:
      TKobukiData robotdata;
 
      //uloha 2.
-     queue<pair<double,double>> passages;
+     queue<pair<double,double>> transitions;
      double b = 0.3;
 
      //uloha 1. 3.
@@ -135,7 +131,7 @@ private:
      clock_t t_offset;
      double rx,rrx,ry,rry,rfi;
      int** glob_map;
-     int** map;
+     int** mapa;
      int map_x,map_y;
 
      //uloha 4
@@ -144,7 +140,7 @@ private:
      queue<Point> wayPoints;
      int** idealArrayMap;
      int widthOfCell = 5; //cm
-     //
+
 
      int datacounter;
 public slots:

@@ -1,6 +1,4 @@
-//#include "stdafx.h"
-  #include<cstring>
-//
+#include<cstring>
 #include "KobukiTxtData.h"
 #include <string>
 #include <vector>
@@ -15,7 +13,6 @@
 CKobukiTxtData::CKobukiTxtData()
 {
 }
-
 
 CKobukiTxtData::~CKobukiTxtData()
 {

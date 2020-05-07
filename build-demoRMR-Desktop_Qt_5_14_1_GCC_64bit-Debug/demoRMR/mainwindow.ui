@@ -15,86 +15,6 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="1">
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <property name="leftMargin">
-       <number>200</number>
-      </property>
-      <item>
-       <widget class="QPushButton" name="pushButton_9">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>162</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Start</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEdit">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>162</width>
-          <height>0</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButton_8">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>162</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Reset robot</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButton_7">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>162</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>LASER SCAN</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
     <item row="3" column="1">
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="topMargin">
@@ -108,25 +28,6 @@
         <property name="rightMargin">
          <number>100</number>
         </property>
-        <item row="15" column="1">
-         <widget class="QPushButton" name="pushButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>162</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>SET REQUIRED</string>
-          </property>
-         </widget>
-        </item>
         <item row="7" column="0">
          <widget class="QLabel" name="label">
           <property name="text">
@@ -147,15 +48,51 @@
           </property>
          </spacer>
         </item>
-        <item row="10" column="0">
-         <widget class="QLabel" name="label_8">
+        <item row="9" column="1">
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_7">
           <property name="text">
-           <string>Y*:</string>
+           <string>X*:</string>
           </property>
          </widget>
         </item>
-        <item row="16" column="1">
-         <widget class="QPushButton" name="pushButton_10">
+        <item row="7" column="1">
+         <widget class="QLineEdit" name="lineEdit_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="11" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Y:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="17" column="1">
+         <widget class="QPushButton" name="pushButton_7">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -169,7 +106,7 @@
            </size>
           </property>
           <property name="text">
-           <string>ADD XY TO QUEUE </string>
+           <string>LASER SCAN</string>
           </property>
          </widget>
         </item>
@@ -199,26 +136,22 @@
           </property>
          </widget>
         </item>
-        <item row="11" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Y:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="7" column="1">
-         <widget class="QLineEdit" name="lineEdit_2">
+        <item row="16" column="1">
+         <widget class="QPushButton" name="pushButton_10">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
+          <property name="minimumSize">
+           <size>
+            <width>162</width>
+            <height>0</height>
+           </size>
           </property>
-          <property name="readOnly">
-           <bool>true</bool>
+          <property name="text">
+           <string>ADD XY TO QUEUE </string>
           </property>
          </widget>
         </item>
@@ -232,25 +165,38 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
-         <widget class="QLabel" name="label_7">
+        <item row="15" column="1">
+         <widget class="QPushButton" name="pushButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>162</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="text">
-           <string>X*:</string>
+           <string>SET REQUIRED</string>
           </property>
          </widget>
         </item>
-        <item row="9" column="1">
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
+        <item row="10" column="0">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Y*:</string>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
+         </widget>
+        </item>
+        <item row="18" column="1">
+         <widget class="QPushButton" name="pushButton_11">
+          <property name="text">
+           <string>Way from robot map</string>
           </property>
-         </spacer>
+         </widget>
         </item>
        </layout>
       </item>
@@ -325,14 +271,8 @@
       </item>
      </layout>
     </item>
-    <item row="2" column="0">
-     <widget class="QFrame" name="frame">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
+    <item row="2" column="1">
+     <widget class="QFrame" name="frame_2">
       <property name="minimumSize">
        <size>
         <width>600</width>
@@ -504,8 +444,14 @@
       </item>
      </layout>
     </item>
-    <item row="2" column="1">
-     <widget class="QFrame" name="frame_2">
+    <item row="2" column="0">
+     <widget class="QFrame" name="frame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimumSize">
        <size>
         <width>600</width>
@@ -525,6 +471,51 @@
        <enum>QFrame::Raised</enum>
       </property>
      </widget>
+    </item>
+    <item row="1" column="1">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="leftMargin">
+       <number>200</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="pushButton_9">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>162</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Start</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_8">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>162</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Way from text map</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

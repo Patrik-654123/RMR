@@ -1,15 +1,6 @@
-
-//#include "stdafx.h"
-
-
 #include "rplidarTxt.h"
 #include "errno.h"
 #include "string.h"
-
-
-
-
-
 
 
 //--pripoji sa na subor s ulozenym meranim...
@@ -53,7 +44,7 @@ LaserMeasurementTxt rplidarTxt::getMeasurementFromFile()
     }
     tt=fgets(text,5000,fp);
     txt=(char*)calloc(strlen(text)+1,sizeof(char));
-        strcpy(txt,text);
+    strcpy(txt,text);
     txt=strtok(txt,"\t ");
     for(int i=0;i<tempL.numberOfScans;i++)
     {
@@ -62,7 +53,7 @@ LaserMeasurementTxt rplidarTxt::getMeasurementFromFile()
     }
     for(int i=0;i<tempL.numberOfScans;i++)
     {
-       // printf("uhol %f vzdialenost %f\n",tempL.Data[i].scanAngle,tempL.Data[i].scanDistance);
+        // printf("uhol %f vzdialenost %f\n",tempL.Data[i].scanAngle,tempL.Data[i].scanDistance);
     }
 
     return tempL;

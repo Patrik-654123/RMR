@@ -1,3 +1,7 @@
+///RIADENIE MOBILNYCH ROBOTOV
+///Viktor Luckanic  xluckanic@is.stuba.sk
+///Patrik Hercut    xhercut@is.stuba.sk
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "map_loader.h"
@@ -12,17 +16,14 @@
 #include <fstream>
 
 
-///Patrik Hercut, Viktor Luckanic
-///projek RMR
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    ///tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    ipaddress="192.168.1.14";
-    // ipaddress = "127.0.0.1";  //simulator ip
+
+    ipaddress="192.168.1.14";    //robot IP
+    // ipaddress = "127.0.0.1";  //simulator IP
 
     ui->setupUi(this);
     datacounter=0;
@@ -36,49 +37,49 @@ MainWindow::~MainWindow()
 void MainWindow::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
+    painter.setBrush(Qt::black);
 
-    ///prekreslujem lidar len vtedy, ked viem ze mam nove data. paintevent sa
-    /// moze pochopitelne zavolat aj z inych dovodov, napriklad zmena velkosti okna
-    painter.setBrush(Qt::black);//cierna farba pozadia(pouziva sa ako fill pre napriklad funkciu drawRect)
+    //pero-lidar data
     QPen pero;
-    pero.setStyle(Qt::SolidLine); //styl pera - plna ciara
-    pero.setWidth(3);//hrubka pera -3pixely
-    pero.setColor(Qt::green);//farba je zelena
+    pero.setStyle(Qt::SolidLine);
+    pero.setWidth(3);
+    pero.setColor(Qt::green);
 
+    //pero-poloha robota a ciela
     QPen pero1;
     pero1.setWidth(4);
     pero1.setColor(Qt::red);
 
+    //pero-smer obchadzania prekazky
     QPen pero2;
     pero2.setWidth(3);
     pero2.setColor(Qt::blue);
 
-
-    QRect rect;//(20,120,700,500);
+    //parametre okien do ktorych sa vykresluje
+    QRect rect;
     QRect rect2;
-    rect= ui->frame->geometry();//ziskate porametre stvorca,do ktoreho chcete kreslit
+    rect= ui->frame->geometry();
     rect2=ui->frame_2->geometry();
 
-    painter.drawRect(rect);//vykreslite stvorec
+    //vykreslenie okien
+    painter.drawRect(rect);
     painter.drawRect(rect2);
 
+    //vykreslenie dat do okien
     if(updateLaserPicture==1)
     {
-        mutex.lock();//lock.. idem robit s premennou ktoru ine vlakno moze prepisovat...
+        mutex.lock();
         updateLaserPicture=0;
 
+        //aktualny laser scan
         painter.setPen(pero);
-        ///teraz sa tu kreslia udaje z lidaru. ak chcete, prerobte
         for(int k=0;k<copyOfLaserData.numberOfScans;k++)
         {
-            //tu sa rata z polarnych suradnic na kartezske, a zaroven sa upravuje mierka aby sme sa zmestili do
-            //do vyhradeneho stvorca aspon castou merania.. ale nieje to pekne, krajsie by bolo
-            //keby ste nastavovali mierku tak,aby bolo v okne zobrazene cele meranie (treba najst min a max pre x a y suradnicu a podla toho to prenasobit)
-            int dist=copyOfLaserData.Data[k].scanDistance/15;//delim 15 aby som sa aspon niektorymi udajmi zmestil do okna.
+            int dist=copyOfLaserData.Data[k].scanDistance/15;
             int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x();
             int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y();
             if(rect.contains(xp,yp))
-                painter.drawEllipse(QPoint(xp, yp),2,2);//vykreslime kruh s polomerom 2
+                painter.drawEllipse(QPoint(xp, yp),2,2);
         }
 
         //globalna mapa
@@ -97,38 +98,38 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
         painter.setPen(pero1);
 
-        //ciel
+        //poloha ciela
         xMap=rect2.topLeft().x()+((int)(rrx*1000)/50);
         yMap=rect2.topLeft().y()+((int)(rry*1000)/50);
         painter.drawEllipse(QPoint(xMap, yMap),1,1);
-        //robot
+
+        //poloha robota
         xMap=rect2.topLeft().x()+((int)(rx*1000)/50);
         yMap=rect2.topLeft().y()+((int)(ry*1000)/50);
         painter.drawEllipse(QPoint(xMap, yMap),1,1);
-        //prechody
-        painter.setPen(pero2);
-        while(!passages.empty())
-        {
-            xMap=rect2.topLeft().x()+((int)(passages.front().first/50));
-            yMap=rect2.topLeft().y()+((int)(passages.front().second/50));
-            painter.drawEllipse(QPoint(xMap, yMap),1,1);
-            passages.pop();
-        }
 
-        mutex.unlock();//unlock..skoncil som
+        //mozne prechody, ako obist prekazku
+        painter.setPen(pero2);
+        while(!transitions.empty())
+        {
+            xMap=rect2.topLeft().x()+((int)(transitions.front().first/50));
+            yMap=rect2.topLeft().y()+((int)(transitions.front().second/50));
+            painter.drawEllipse(QPoint(xMap, yMap),1,1);
+            transitions.pop();
+        }
+        mutex.unlock();
     }
 }
 
 void MainWindow::processThisRobot()
 {
+    //po starte nastav parametre robota
     if (!robotdata.robotOn)
     {
         robotdata.offsetR=robotdata.EncoderRight;
         robotdata.offsetL=robotdata.EncoderLeft;
         robotdata.robotOn=true;
-        std::cout<<"encoder values (L,R): "<<robotdata.offsetL<<' '<<  robotdata.offsetR<<endl;
 
-        //other starting values
         robotdata.robotX=6;
         robotdata.robotReqX=8.5;
         robotdata.robotY=6;
@@ -136,22 +137,18 @@ void MainWindow::processThisRobot()
 
         robotdata.robotReqSpeed=0;
         robotdata.robotSpeed=0;
-        robotdata.speedSample=0;
-        robotdata.robotFi=(90*PI)/180; //Pri datach
+        robotdata.robotFi=(90*PI)/180; //pri citani dat zo suboru
         robotdata.robotFiDeg=robotdata.robotFi*(180/PI);
         robotdata.robotReqAngle=0;
         robotdata.robotRadius=0;
     }
 
-    //Fukncia lokalizacie
+    //fukncia lokalizacie, odometrie
     processLocalization();
 
-    ///tu mozete robit s datami z robota
-    ///ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
-    ///teraz tu len vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
+    //vypis hodnot do okien
     if(datacounter%5==0)
     {
-    ///ak nastavite hodnoty priamo do prvkov okna,ako je to na tychto zakomentovanych riadkoch tak sa moze stat ze vam program padne
      ui->lineEdit_2->setText(QString::number(robotdata.robotX));
      ui->lineEdit_3->setText(QString::number(robotdata.robotY));
      ui->lineEdit_4->setText(QString::number(robotdata.robotFiDeg));
@@ -160,32 +157,23 @@ void MainWindow::processThisRobot()
      ui->lineEdit_7->setText(QString::number(robotdata.robotSpeed));
      ui->lineEdit_10->setText(QString::number(robotdata.robotReqSpeed));
      ui->lineEdit_11->setText(QString::number(robotdata.robotReqAngle));
-
-        /// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
-        /// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete
-        //emit uiValuesChanged(15,rand()%100,robotdata.EncoderLeft);
-        ///toto neodporucam na nejake komplikovane struktury. robit to kopiu dat. radsej vtedy posielajte
-        /// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
-        /// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
     }
     datacounter++;
 }
 
 void MainWindow::processThisLidar(LaserMeasurement &laserData)
 {
-    mutex.lock();//idem prepisovat copyOfLaserData ktoru pouziva paintEvent
+    mutex.lock();
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
-    //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
-    // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
 
     //zapis scan do mapy
     writeMap(laserData);
     //najdi prekazky
-    findWay(laserData);
+    checkWay(laserData);
 
     updateLaserPicture=1;
-    mutex.unlock();//skoncil som
-    update();//tento prikaz je vlastne signal, ktory prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
+    mutex.unlock();
+    update();
 }
 
 void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
@@ -195,21 +183,21 @@ void  MainWindow::setUiValues(double robotX,double robotY,double robotFi)
      ui->lineEdit_4->setText(QString::number(robotFi));
 }
 
-void MainWindow::on_pushButton_9_clicked() //start button
+//call back funkcie tlacidiel
+void MainWindow::on_pushButton_9_clicked() //start
 {
+    //synchornizacia casu citania z textu
     mutex.lock();
     t_offset=clock();
     mutex.unlock();
 
-    //tu sa nastartuju vlakna ktore citaju data z lidaru a robota
+    //vytvorenie vlakien robota a lidaru
     laserthreadID=pthread_create(&laserthreadHandle,NULL,&laserUDPVlakno,(void *)this);
     robotthreadID=pthread_create(&robotthreadHandle,NULL,&robotUDPVlakno,(void *)this);
 
-    ///toto je prepojenie signalu o zmene udajov, na signal
     connect(this,SIGNAL(uiValuesChanged(double,double,double)),this,SLOT(setUiValues(double,double,double)));
 
-//////////////////////////////////////////////////////////////////////////
-    //alokujem global mapu
+    //alokuj globalnu mapu
     glob_map = new int*[240];
 
     for(int i=0; i<240; i++)
@@ -220,153 +208,106 @@ void MainWindow::on_pushButton_9_clicked() //start button
         {
             glob_map[i][j] = 0;
         }
-
-    }
-
-
-    //Vito
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // planovanie z mapy idealnej z .txt
-
-    int xSize = 120;
-    int ySize = 120;
-
-    fileToIdealArrayMap("priestor.txt");
-    expandObstacles(idealArrayMap, xSize, ySize);
-    getWayPoints(idealArrayMap, xSize, ySize, 100, 100, 500.0, 250.0);
-
-    printToFile("idealMap.txt", idealArrayMap, xSize, ySize, true);
-
-    //////////////////////////////////////////////////////////
+    }   
 }
 
-void MainWindow::on_pushButton_2_clicked() //forward
+void MainWindow::on_pushButton_2_clicked() //dopredu
 {
-    //pohyb dopredu
     std::vector<unsigned char> mess=robot.setTranslationSpeed(300);
-
-    ///ak by ste chceli miesto pohybu dopredu napriklad pohyb po kruznici s polomerom 1 meter zavolali by ste funkciu takto:
-    /// std::vector<unsigned char> mess=robot.setArcSpeed(100,1000);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
-void MainWindow::on_pushButton_3_clicked() //back
+void MainWindow::on_pushButton_3_clicked() //spat
 {
-
     std::vector<unsigned char> mess=robot.setTranslationSpeed(-250);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
-void MainWindow::on_pushButton_6_clicked() //left
+void MainWindow::on_pushButton_6_clicked() //vlavo
 {
     std::vector<unsigned char> mess=robot.setRotationSpeed(M_PI/2);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
-void MainWindow::on_pushButton_5_clicked() //right
+void MainWindow::on_pushButton_5_clicked() //vpravo
 {
-
    std::vector<unsigned char> mess=robot.setArcSpeed(100,-100);
    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
-   // std::vector<unsigned char> mess=robot.setRotationSpeed(-M_PI/2);
-   // if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
 void MainWindow::on_pushButton_4_clicked() //stop
 {
-    //Vito
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////kde su
-    // planovanie v mape spravenej nami
-    mutex.lock();
-
-    expandObstacles(map, map_x, map_y);
-    getWayPoints(map, map_x, map_y, 125.0, 150.0, 375.0, 250.0);
-
-    printToFile("mapaMap.txt", map, map_x, map_y, true);
-
-    mutex.unlock();
-    /////////////////////////////////////////////////////////////////////////////
-
-
    std::vector<unsigned char> mess=robot.setTranslationSpeed(0);
    if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
 
-void MainWindow::on_pushButton_clicked()   //set req. values
+void MainWindow::on_pushButton_clicked()   //nastav req. hodnoty
 {
-    std::cout<<"Buton SET"<<endl;
-
-
     robotdata.robotReqX=ui->lineEdit_8->text().toDouble();
     robotdata.robotReqY=ui->lineEdit_9->text().toDouble();
     robotdata.robotReqSpeed=ui->lineEdit_10->text().toShort();
     robotdata.robotReqAngle=ui->lineEdit_11->text().toDouble();
-
-    //odomkunie zamku na prepocet otocenia,
-    robotdata.clockWiseLock=false;
-    robotdata.robotReqRotSpeed=0;
-
-    //zastav robota
-    on_pushButton_4_clicked();
-
-    //vypocitaj  nove natocenie robota
-    robotdata.robotReqAngle=atan2(robotdata.robotReqY-robotdata.robotY,robotdata.robotReqX-robotdata.robotX)*(180/PI);
-    if(robotdata.robotReqAngle < 0)
-        robotdata.robotReqAngle += 360;
-
-    robotdata.robotRotated=false;
 }
 
-void MainWindow::on_pushButton_10_clicked() //add XY to queue
+void MainWindow::on_pushButton_10_clicked() //pridaj XY do queue
 {
-    std::cout<<"Button ADD to Queue"<<endl;
-
     pair<double,double> posXY;
     posXY=make_pair(ui->lineEdit_8->text().toDouble(),ui->lineEdit_9->text().toDouble());
 
     robotdata.positionQ.push(posXY);
 }
 
-void MainWindow::on_pushButton_7_clicked() //LIDAR scan button
+void MainWindow::on_pushButton_7_clicked() //LIDAR scan
 {
     mutex.lock();
-    ofstream myfile ("mapa.txt");
-    if (myfile.is_open())
-    {
-        for(int i = 0;i<120; i++)
-        {
-            for(int j = 0; j<120;j++)
-            {
-                myfile << glob_map[i][j];
-            }
-            myfile<<"\n";
-        }
-        myfile.close();
-    }
     robotdata.lidarScan=true;
     mutex.unlock();
 }
 
-/// tato funkcia vas nemusi zaujimat
-/// toto je funkcia s nekonecnou sluckou,ktora cita data z lidaru (UDP komunikacia)
+void MainWindow::on_pushButton_11_clicked() //planovanie z robot mapy
+{
+
+    // planovanie v nami spravenej mape
+    if(mapa != 0) ///////////////////////////////////////////////////////////////////////
+    {
+     mutex.lock();
+        expandObstacles(mapa, map_x, map_y);
+        getWayPoints(mapa, map_x, map_y, 125.0, 150.0, 375.0, 250.0);
+
+        printToFile("mapa_robot.txt", mapa, map_x, map_y, true);
+    mutex.unlock();
+    }
+
+}
+
+void MainWindow::on_pushButton_8_clicked() //planovanie z idealnej mapy
+{
+    // planovanie z mapy idealnej z .txt
+    int xSize = 120;
+    int ySize = 120;
+
+    fileToIdealArrayMap("priestor.txt");
+    expandObstacles(idealArrayMap, xSize, ySize);
+    getWayPoints(idealArrayMap, xSize, ySize, 100, 100, 500.0, 250.0);
+    printToFile("mapa_ideal.txt", idealArrayMap, xSize, ySize, true);
+}
+
+//UDP lidar
 void MainWindow::laserprocess()
 {
-    //precitaj data z lidaru
+    //precitaj data lidaru z textu
     readLidarSynch();
     //uloz precitanu mapu
     saveMap();
 
     // Initialize Winsock
     las_slen = sizeof(las_si_other);
-    if ((las_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-    {
-
-    }
+    if ((las_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){}
 
     int las_broadcastene=1;
     setsockopt(las_s,SOL_SOCKET,SO_BROADCAST,(char*)&las_broadcastene,sizeof(las_broadcastene));
-    // zero out the structure
+
+    //zero out the structure
     memset((char *) &las_si_me, 0, sizeof(las_si_me));
 
     las_si_me.sin_family = AF_INET;
@@ -378,39 +319,30 @@ void MainWindow::laserprocess()
     las_si_posli.sin_addr.s_addr = inet_addr(ipaddress.data());//htonl(INADDR_BROADCAST);
     bind(las_s , (struct sockaddr*)&las_si_me, sizeof(las_si_me) );
     char command=0x00;
-    //najskor posleme prazdny prikaz
-    //preco?
-    //https://ih0.redbubble.net/image.74126234.5567/raf,750x1000,075,t,heather_grey_lightweight_raglan_sweatshirt.u3.jpg
-    if (sendto(las_s, &command, sizeof(command), 0, (struct sockaddr*) &las_si_posli, las_slen) == -1)//podla toho vie kam ma robot posielat udaje-odtial odkial mu dosla posledna sprava
-    {
 
-    }
+    if (sendto(las_s, &command, sizeof(command), 0, (struct sockaddr*) &las_si_posli, las_slen) == -1){}
 
     LaserMeasurement measure;
     while(1)
     {
-
         if ((las_recv_len = recvfrom(las_s, (char*)&measure.Data, sizeof(LaserData)*1000, 0, (struct sockaddr *) &las_si_other,&las_slen)) == -1)
         {
             continue;
         }
         measure.numberOfScans=las_recv_len/sizeof(LaserData);
-        //tu mame data..zavolame si funkciu
+
+        //funkcia na spracovanie dat robota
         processThisLidar(measure);
     }
-    ///ako som vravel,toto vas nemusi zaujimat
 }
 
-///tato funkcia vas nemusi zaujimat
-/// toto je funkcia s nekonecnou sluckou,ktora cita data z robota (UDP komunikacia)
+//UDP robot
 void MainWindow::robotprocess()
 {
+    //precitaj data lidaru z textu
     readRobotSynch();
 
-
-    if ((rob_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-    {        
-    }
+    if ((rob_s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1){}
 
     char rob_broadcastene=1;
     setsockopt(rob_s,SOL_SOCKET,SO_BROADCAST,&rob_broadcastene,sizeof(rob_broadcastene));
@@ -423,23 +355,21 @@ void MainWindow::robotprocess()
 
     rob_si_posli.sin_family = AF_INET;
     rob_si_posli.sin_port = htons(5300);
-    rob_si_posli.sin_addr.s_addr =inet_addr(ipaddress.data());//inet_addr("10.0.0.1");// htonl(INADDR_BROADCAST);
+    rob_si_posli.sin_addr.s_addr =inet_addr(ipaddress.data());
     rob_slen = sizeof(rob_si_me);
     bind(rob_s , (struct sockaddr*)&rob_si_me, sizeof(rob_si_me) );
 
     std::vector<unsigned char> mess=robot.setDefaultPID();
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-    {
+    {}
 
-    }
     usleep(100*1000);
+
     mess=robot.setSound(440,1000);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1)
-    {
+    {}
 
-    }
-   unsigned char buff[50000];
-
+    unsigned char buff[50000];
 
     while(1)
     {
@@ -448,14 +378,9 @@ void MainWindow::robotprocess()
         {
             continue;
         }
-        //https://i.pinimg.com/236x/1b/91/34/1b9134e6a5d2ea2e5447651686f60520--lol-funny-funny-shit.jpg
-        //tu mame data..zavolame si funkciu
-
-        //     memcpy(&sens,buff,sizeof(sens));
-        //      struct timespec t;
-        //      clock_gettime(CLOCK_REALTIME,&t);
 
         int returnval=robot.fillData(robotdata,(unsigned char*)buff);
+
         if(returnval==0)
         {
             processThisRobot();
@@ -463,8 +388,7 @@ void MainWindow::robotprocess()
     }
 }
 
-
-//funkcia na polohovanie
+//funkcia na prechodu na ziadanu poziciu
 void MainWindow::getPossition()
 {
     double deltaX=robotdata.robotReqX-robotdata.robotX;
@@ -514,7 +438,6 @@ void MainWindow::getPossition()
         //nova ziadana hodnota polohy,
         if(robotdata.positionQ.empty())
         {
-
         }
         else{
             robotdata.robotReqX=robotdata.positionQ.front().first;
@@ -530,12 +453,11 @@ void MainWindow::getPossition()
         }
     }
 
-    std::cout<<"rSpeed:"<<robotdata.robotSpeed<<" rRadius:"<<robotdata.robotRadius<<endl;
-
     std::vector<unsigned char> mess=robot.setArcSpeed(robotdata.robotSpeed,robotdata.robotRadius);
     if(sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
-//funkcia nastavenie uhla nova
+
+//funkcia nastavenie natocenia robota
 void MainWindow::setAngle()
 {
     int deltaFi=((int)robotdata.robotReqAngle % 360)-((int)robotdata.robotFiDeg % 360);
@@ -566,19 +488,18 @@ void MainWindow::setAngle()
         robotdata.robotRotated=true;
     }
 
-    std::cout<<"rychlost robota "<<robotdata.robotReqRotSpeed<<endl;
-
     std::vector<unsigned char> mess=robot.setRotationSpeed(robotdata.robotReqRotSpeed);
     if (sendto(rob_s, (char*)mess.data(), sizeof(char)*mess.size(), 0, (struct sockaddr*) &rob_si_posli, rob_slen) == -1){}
 }
-//funkcia lokalizacie
+
+//funkcia lokalizacie odometira
 void MainWindow::processLocalization()
 {
     //pomocne premene
     double lr,ll,l,dAlfa,Fi_k1;
 
     //Osetrenie pretecenia encoderov
-    //Lavy
+    //lavy
     if(abs(robotdata.EncoderLeft-robotdata.offsetL)>(numeric_limits<unsigned short>::max()/2))
     {
         if(robotdata.EncoderLeft<robotdata.offsetL)
@@ -594,7 +515,7 @@ void MainWindow::processLocalization()
     {
         ll=(robot.getTickConst())*(robotdata.EncoderLeft-robotdata.offsetL);
     }
-    //Pravy
+    //pravy
     if(abs(robotdata.EncoderRight-robotdata.offsetR)>(numeric_limits<unsigned short>::max()/2))
     {
         if((robotdata.EncoderRight<robotdata.offsetR))
@@ -629,11 +550,11 @@ void MainWindow::processLocalization()
         robotdata.robotY=robotdata.robotY-((robot.getBconst()*(lr+ll))/(2*(lr-ll)))*(cos(Fi_k1)-cos(robotdata.robotFi));
     }
 
-    //Ulozenie hodnot uhlov
+    //ulozenie hodnot uhlov
     robotdata.robotFi=Fi_k1;
     robotdata.robotFiDeg=robotdata.robotFi*(180/PI);
 
-    //Ulozenie do pomocnych premenych mapy a detegovania prekazok
+    //ulozenie do pomocnych premenych mapy a detegovania prekazok
     mutex.lock();
     rx=robotdata.robotX;
     rrx=robotdata.robotReqX;
@@ -642,10 +563,10 @@ void MainWindow::processLocalization()
     rfi=robotdata.robotFi;
     mutex.unlock();
 }
+
 //ciel> ulozi do wayPoints body prechodu
-void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double ry, double finX, double finY){
-
-
+void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double ry, double finX, double finY)
+{
     queue<Point> pointsToEvaluate;
     Point pointFin, p;
     int newDirection;
@@ -672,8 +593,6 @@ void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double
         return;
     }
 
-
-
     pointsToEvaluate.push(pointFin);
 
     //ohodnocuje postupne bunky kym nepride k -1
@@ -687,7 +606,6 @@ void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double
         if (foundFinish(map, p, xSize, ySize))
             break;
     }
-
 
     //naplnuje body kadial treba ist
     while (1){
@@ -718,10 +636,7 @@ void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double
             x -= 1;
         else
             y -= 1;
-
-
     }
-
 }
 
 //urcite smer dalsieho pohybu // 1-vpravo 2-hore 3-vlavo 4-dole
@@ -803,7 +718,6 @@ void MainWindow::evaluateNeighbors(int** map,int xSize, int ySize, queue<Point>*
         p.y = y-1;
         (*pointsToEvaluate).push(p);
     }
-
 }
 
 //prerobi mapu z TMapArea do podobz 2D pola
@@ -826,7 +740,6 @@ void MainWindow::fileToIdealArrayMap(char* filename){
             idealArrayMap[i][j] = 0;
         }
     }
-
 
     //prepocita stenu dookola
     for (int i = 0; i < idealMap.wall.numofpoints; ++i) {
@@ -878,11 +791,10 @@ void MainWindow::fileToIdealArrayMap(char* filename){
     vector<TMapObject>::iterator end = idealMap.obstacle.end();
 
     //prepocita prekazky vo vnutri
-    for (; it != end; it++){
-
-        for (int i = 0; i < it->numofpoints; ++i) {
-
-
+    for (; it != end; it++)
+    {
+        for (int i = 0; i < it->numofpoints; ++i)
+        {
             if (it->numofpoints - i > 1){
                 pred = i;
                 po = i+1;
@@ -952,7 +864,6 @@ void MainWindow::expandObstacles(int** map, int xSize, int ySize)
         }
     }
 
-
     //spravi z 2 (okraje) 1, aby to bolo brane ako prekazka
     for(int x = 0; x < xSize; x++){
 
@@ -962,8 +873,6 @@ void MainWindow::expandObstacles(int** map, int xSize, int ySize)
                 map[x][y] = 1;
         }
     }
-
-
 }
 
 //citanie data z robota v casovej vzorke
@@ -983,7 +892,6 @@ void MainWindow::readRobotSynch()
         {
             if(robotTxtData.timestamp <= ((clock()-t_ofset_robot)/100))
             {
-               // std::cout<<"ROBOT thread stamp "<<(clock()-t_ofset_robot)/100 <<" DATA timestamp "<<robotTxtData.timestamp<<endl;
                 robotdata.EncoderLeft=robotTxtData.encoderleft;
                 robotdata.EncoderRight=robotTxtData.encoderright;
                 robotdata.GyroAngle=robotTxtData.gyroangle;
@@ -999,7 +907,7 @@ void MainWindow::readRobotSynch()
             }
         }
     }
-    //textovy dokument precitany
+    //textovy dokument robota precitany
 }
 
 //citanie data z lidaru v casovej vzorke
@@ -1010,7 +918,7 @@ void MainWindow::readLidarSynch()
     clock_t t_ofset_laser= t_offset;
     mutex.unlock();
 
-    //Citanie dat lidaru, z textoveho dokumentu
+    //citanie dat lidaru, z textoveho dokumentu
     lidarTxtData.connectToFile("lidardata.txt");
 
     if(lidarTxtData.fp!= NULL)
@@ -1041,6 +949,7 @@ void MainWindow::readLidarSynch()
             //textovy dokument precitany
         }
     }
+
 }
 
 //zapis snimky lidaru do globalnej mapy
@@ -1076,7 +985,7 @@ void MainWindow::saveMap()
     int x_first,x_last,y_first,y_last;
     x_first=x_last=y_first=y_last=0;
 
-    //Prejdi celu mapu najdi platne data
+    //prejdi celu mapu najdi platne data
     for(int i = 0;i <240; i++)
     {
         for(int j = 0; j<240;j++)
@@ -1101,22 +1010,22 @@ void MainWindow::saveMap()
     map_y = y_last-y_first;
 
     //alokuj mapu a napln orezanu mapu
-    map = new int*[map_x];
+    mapa = new int*[map_x];
 
     for(int i=0;i<map_x;i++)
     {
-        map[i]=new int[map_y];
+        mapa[i]=new int[map_y];
     }
 
     for(int i=0;i<map_x;i++)
     {
         for(int j=0;j<map_y;j++)
         {
-            map[i][j]=glob_map[x_first+i][y_first+j];
+            mapa[i][j]=glob_map[x_first+i][y_first+j];
         }
     }
 
-    printToFile("mapa.txt", map, map_x, map_y, false);
+    printToFile("mapa.txt", mapa, map_x, map_y, false);
     printToFile("mapa_cela.txt", glob_map, 240, 240 , false);
 
     // dealokuj globalnu mapu
@@ -1128,7 +1037,7 @@ void MainWindow::saveMap()
 }
 
 //deteguj prekazky
-void MainWindow::findWay(LaserMeasurement &laserData)
+void MainWindow::checkWay(LaserMeasurement &laserData)
 {
     double angle,crit_dist,scan_dist;
     double dist=sqrt(pow(rx-rrx,2.0)+pow(ry-rry,2.0));
@@ -1145,7 +1054,7 @@ void MainWindow::findWay(LaserMeasurement &laserData)
     if(stop_zone > 360)
         stop_zone=stop_zone-360;
 
-    //Over ci prichadza ku kolizii
+    //over ci prichadza ku kolizii smerom k cielu
     bool colision=false;
     for (int i=0;i<laserData.numberOfScans;i++)
     {
@@ -1166,16 +1075,16 @@ void MainWindow::findWay(LaserMeasurement &laserData)
     if(colision)
     {
         //Najdi prechody
-        findPassages(laserData);
+        findTransitions(laserData);
         //Over prechody
-        checkPassages(laserData);
+        checkTransitions(laserData);
         //Vyber prechod
-        chosePassage();
+        choseTransition();
     }
 }
 
 //najdi prechody
-void MainWindow::findPassages(LaserMeasurement &laserData)
+void MainWindow::findTransitions(LaserMeasurement &laserData)
 {
     double dist,dist_b,scan_dist,angle,alfa;
     double scan_dist_1=laserData.Data[0].scanDistance;
@@ -1210,22 +1119,22 @@ void MainWindow::findPassages(LaserMeasurement &laserData)
                 x_pr=(rx*1000)+dist_b*cos(angle+alfa);
                 y_pr=(ry*1000)+dist_b*sin(angle+alfa);
             }
-            passages.push(make_pair(x_pr,y_pr));
+            transitions.push(make_pair(x_pr,y_pr));
         }
         scan_dist_1=laserData.Data[i].scanDistance;
     }
 }
 
 //over prechody
-void MainWindow::checkPassages(LaserMeasurement &laserData)
+void MainWindow::checkTransitions(LaserMeasurement &laserData)
 {
-    queue<pair<double,double>> pass_tmp;
+    queue<pair<double,double>> transition_tmp;
     double angle,crit_dist,scan_dist,dist,alfa,alfa_z;
 
-    while(!passages.empty())
+    while(!transitions.empty())
     {
-        dist=sqrt(pow(rx-(passages.front().first/1000),2.0)+pow(ry-(passages.front().second)/1000,2.0));
-        alfa=atan2((passages.front().second/1000)-ry,(passages.front().first/1000)-rx);
+        dist=sqrt(pow(rx-(transitions.front().first/1000),2.0)+pow(ry-(transitions.front().second)/1000,2.0));
+        alfa=atan2((transitions.front().second/1000)-ry,(transitions.front().first/1000)-rx);
         alfa_z=atan(b/dist);
 
         double start_zone=rfi*(180/PI)-(alfa+alfa_z)*(180/PI);
@@ -1257,36 +1166,36 @@ void MainWindow::checkPassages(LaserMeasurement &laserData)
         }
         if(!colision)
         {
-            pass_tmp.push((passages.front()));
+            transition_tmp.push((transitions.front()));
         }
-        passages.pop();
+        transitions.pop();
     }
-    passages=pass_tmp;
+    transitions=transition_tmp;
 }
 
-//vyber prechod
-void MainWindow::chosePassage()
+//vyber prechod v smere do ciela
+void MainWindow::choseTransition()
 {
-  pair<double,double> pass_tmp;
+  pair<double,double> transition_tmp;
   double dist,dist_best,pass_x,pass_y;
-  pass_x=(passages.front().first)/1000;
-  pass_y=(passages.front().second)/1000;
+  pass_x=(transitions.front().first)/1000;
+  pass_y=(transitions.front().second)/1000;
   dist_best=sqrt(pow(rx-pass_x,2.0)+pow(ry-pass_y,2.0))+sqrt(pow(pass_x-rrx,2.0)+pow(pass_y-rry,2.0));
-  pass_tmp=passages.front();
-  passages.pop();
-  while(!passages.empty())
+  transition_tmp=transitions.front();
+  transitions.pop();
+  while(!transitions.empty())
   {
-      pass_x=(passages.front().first)/1000;
-      pass_y=(passages.front().second)/1000;
+      pass_x=(transitions.front().first)/1000;
+      pass_y=(transitions.front().second)/1000;
       dist=sqrt(pow(rx-pass_x,2.0)+pow(ry-pass_y,2.0))+sqrt(pow(pass_x-rrx,2.0)+pow(pass_y-rry,2.0));
       if(dist<dist_best)
       {
-          pass_tmp=passages.front();
+          transition_tmp=transitions.front();
           dist_best=dist;
       }
-      passages.pop();
+      transitions.pop();
   }
-  passages.push(pass_tmp);
+  transitions.push(transition_tmp);
 }
 
 //zapis do textoveho suboru

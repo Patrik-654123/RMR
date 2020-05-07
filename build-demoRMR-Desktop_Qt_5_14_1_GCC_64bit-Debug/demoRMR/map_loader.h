@@ -4,10 +4,8 @@
 
 typedef struct
 {
-
     double x;
     double y;
-
 }Point;
 
 typedef union{

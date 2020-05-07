@@ -1,16 +1,8 @@
 #include "CKobuki.h"
-//#include "termios.h"
 #include "errno.h"
 #include <cstddef>
 #include <iostream>
 
-
-
-///niektore funkcie maju zakomentovane tela..
-/// je to preto ze povodna trieda je na priamu komunikaciu s robotom
-/// (ano, toto zial bezi na robote. sklamanie,ze?)
-/// vy ale pracujete s udp verziou, ktora pouziva CKobuki len kvoli niektorym pomocnym funkciam
-/// kazdy rozumny programator by urobil novu triedu..ale kto rozumny by robil v skolstve,ze ano
 int set_interface_attribs2 (int fd, int speed, int parity)
 {
   /*  struct termios tty;
@@ -65,21 +57,18 @@ void set_blocking2 (int fd, int should_block)
     tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
 
     if (tcsetattr (fd, TCSANOW, &tty) != 0)
-        printf ("error %d setting term attributes", errno);*/
+        printf ("error %d setting term attributes", errno);
+   */
 }
 
-
-
-
-
 int CKobuki::checkChecksum(unsigned char * data)
-{//najprv hlavicku
+{
     unsigned char chckSum = 0;
     for (int i = 0; i < data[0]+2; i++)
     {
         chckSum ^= data[i];
     }
-    return chckSum;//0 ak je vsetko v poriadku,inak nejake cislo
+    return chckSum;
 }
 
 std::vector<unsigned char> CKobuki::setLed(int led1, int led2)
@@ -88,7 +77,7 @@ std::vector<unsigned char> CKobuki::setLed(int led1, int led2)
     message[7] = message[2] ^ message[3] ^ message[4] ^ message[5] ^ message[6];
 
     std::vector<unsigned char> vystup(message,message+sizeof(message)/sizeof(message[0]));
-        return vystup;
+    return vystup;
 }
 
 std::vector<unsigned char> CKobuki::setTranslationSpeed(int mmpersec)
@@ -98,8 +87,7 @@ std::vector<unsigned char> CKobuki::setTranslationSpeed(int mmpersec)
 
 
     std::vector<unsigned char> vystup(message,message+sizeof(message)/sizeof(message[0]));
-        return vystup;
-
+    return vystup;
 }
 
 std::vector<unsigned char> CKobuki::setRotationSpeed(double radpersec)
@@ -110,7 +98,7 @@ std::vector<unsigned char> CKobuki::setRotationSpeed(double radpersec)
 
 
     std::vector<unsigned char> vystup(message,message+sizeof(message)/sizeof(message[0]));
-        return vystup;
+    return vystup;
 }
 
 std::vector<unsigned char> CKobuki::setArcSpeed(int mmpersec, int radius)
@@ -119,10 +107,6 @@ std::vector<unsigned char> CKobuki::setArcSpeed(int mmpersec, int radius)
         return setTranslationSpeed(mmpersec);
 
     }
-    //viac o prikaze a jeho tvorbe si mozete precitat napriklad tu
-    //http://yujinrobot.github.io/kobuki/enAppendixProtocolSpecification.html
-    //alebo tu
-    //https://bit.ly/2MWSbcx
 
     int speedvalue = mmpersec * ((radius + (radius>0? 230:-230) )/ 2 ) / radius;
 
@@ -130,20 +114,16 @@ std::vector<unsigned char> CKobuki::setArcSpeed(int mmpersec, int radius)
     message[13] = message[2] ^ message[3] ^ message[4] ^ message[5] ^ message[6] ^ message[7] ^ message[8] ^ message[9] ^ message[10] ^ message[11] ^ message[12];
 
     std::vector<unsigned char> vystup(message,message+sizeof(message)/sizeof(message[0]));
-        return vystup;
+    return vystup;
 }
 
-///2 body navyse prvej skupine ktora pomocou tejto funkcie zahra melodiu pink panther (staci 5 sekund)
-/// druha skupina co chce 2 body musi zahrat uvod zo smooth criminal
-/// neuverite, 2body moze ziskat aj tretia skupina.. jedine co preto musi spravit je zahrat na robote Bohemian Rhapsody (kompletnu pesnicku.aj s vokalmi)
 std::vector<unsigned char> CKobuki::setSound(int noteinHz, int duration)
 {
     int notevalue = floor((double)1.0 / ((double)noteinHz*0.00000275) + 0.5);
     unsigned char message[13] = { 0xaa,0x55,0x09,0x0c,0x02,0xf0,0x00,0x03,0x03,(unsigned char)(notevalue%256),(unsigned char)(notevalue>>8),(unsigned char)(duration%256),0x00 };
     message[12] = message[2] ^ message[3] ^ message[4] ^ message[5] ^ message[6] ^ message[7]^ message[8]^ message[9]^ message[10]^ message[11];
 
-
-std::vector<unsigned char> vystup(message,message+sizeof(message)/sizeof(message[0]));
+    std::vector<unsigned char> vystup(message,message+sizeof(message)/sizeof(message[0]));
     return vystup;
 }
 
@@ -156,23 +136,20 @@ std::vector<unsigned char> CKobuki::setDefaultPID()
         message[22]=message[22]^message[i+2];
     }
 
-
     std::vector<unsigned char> vystup(message,message+sizeof(message)/sizeof(message[0]));
-        return vystup;
+    return vystup;
 }
 
 int CKobuki::parseKobukiMessage(TKobukiData &output, unsigned char * data)
 {
     int rtrnvalue = checkChecksum(data);
-    //ak je zly checksum,tak kaslat na to
+
     if (rtrnvalue != 0)
         return -2;
 
     int checkedValue = 1;
-    //kym neprejdeme celu dlzku
     while (checkedValue < data[0])
     {
-        //basic data subload
         if (data[checkedValue] == 0x01)
         {
             checkedValue++;
@@ -231,7 +208,7 @@ int CKobuki::parseKobukiMessage(TKobukiData &output, unsigned char * data)
             output.GyroAngle = data[checkedValue + 1] * 256 + data[checkedValue];
             checkedValue += 2;
             output.GyroAngleRate = data[checkedValue + 1] * 256 + data[checkedValue];
-            checkedValue += 5;//3 unsued
+            checkedValue += 5;
         }
         else if (data[checkedValue] == 0x05)
         {

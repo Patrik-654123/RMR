@@ -119,17 +119,13 @@ typedef struct
     unsigned short analogInputCh3;
     //---struktura s datami ktore sa nam tam objavia iba na poziadanie
 
-    //PATO> premene
-    double speedSample;
+    ///premene pre pracu na zadani
     signed short robotReqSpeed;
     signed short robotSpeed;
-    signed short robotTMpSpeed;
 
     bool robotOn;
     bool robotRotated;
-    bool angleIsSet;
 
-    bool clockWiseLock;
     bool clockWise;
     bool lidarScan;
 
@@ -149,8 +145,7 @@ typedef struct
 
     //pozition queue
     queue<pair<double,double>> positionQ;
-    
-
+    //
 
     TExtraRequestData extraInfo;
 }TKobukiData;
