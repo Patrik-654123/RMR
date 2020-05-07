@@ -132,7 +132,8 @@ private:
      double rx,rrx,ry,rry,rfi;
      int** glob_map;
      int** mapa;
-     int map_x,map_y;
+     int map_x = 0;
+     int map_y = 0;
 
      //uloha 4
      map_loader mapLoader;

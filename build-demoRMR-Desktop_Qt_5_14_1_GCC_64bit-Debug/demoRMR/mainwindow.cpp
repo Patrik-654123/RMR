@@ -209,6 +209,10 @@ void MainWindow::on_pushButton_9_clicked() //start
             glob_map[i][j] = 0;
         }
     }   
+
+//    const QString kkk = mapa[0][0];
+//    ui->label_19->setText(QString::pointer(mapa));
+//    std::cout<<mapa;
 }
 
 void MainWindow::on_pushButton_2_clicked() //dopredu
@@ -266,16 +270,49 @@ void MainWindow::on_pushButton_7_clicked() //LIDAR scan
 
 void MainWindow::on_pushButton_11_clicked() //planovanie z robot mapy
 {
-
     // planovanie v nami spravenej mape
-    if(mapa != 0) ///////////////////////////////////////////////////////////////////////
+    if(map_x != 0) ///////////////////////////////////////////////////////////////////////
     {
-     mutex.lock();
-        expandObstacles(mapa, map_x, map_y);
-        getWayPoints(mapa, map_x, map_y, 125.0, 150.0, 375.0, 250.0);
+        mutex.lock();
 
-        printToFile("mapa_robot.txt", mapa, map_x, map_y, true);
-    mutex.unlock();
+        double curX=ui->lineEdit->text().toDouble()*100;
+        double curY=ui->lineEdit_12->text().toDouble()*100;
+        double reqX=ui->lineEdit_13->text().toDouble()*100;
+        double reqY=ui->lineEdit_14->text().toDouble()*100;
+
+
+        //vytvor pomocne pole
+        int** tmpMap = new int*[map_x];
+
+        for(int i=0; i<map_x; i++)
+        {
+            tmpMap[i]=new int[map_y];
+
+            for(int j=0; j<map_y; j++)
+            {
+                tmpMap[i][j] = mapa[i][j];
+            }
+        }
+
+        expandObstacles(tmpMap, map_x, map_y);
+        getWayPoints(tmpMap, map_x, map_y, curX, curY, reqX, reqY);
+
+        printToFile("mapa_robot.txt", tmpMap, map_x, map_y, true);
+
+
+
+
+        // dealokuj pomocne pole
+        for( int i = 0 ; i < map_x ; i++ )
+        {
+            delete[] tmpMap[i];
+        }
+        delete[] tmpMap;
+
+
+
+
+        mutex.unlock();
     }
 
 }
@@ -286,10 +323,40 @@ void MainWindow::on_pushButton_8_clicked() //planovanie z idealnej mapy
     int xSize = 120;
     int ySize = 120;
 
+    double curX=ui->lineEdit->text().toDouble()*100;
+    double curY=ui->lineEdit_12->text().toDouble()*100;
+    double reqX=ui->lineEdit_13->text().toDouble()*100;
+    double reqY=ui->lineEdit_14->text().toDouble()*100;
+
     fileToIdealArrayMap("priestor.txt");
-    expandObstacles(idealArrayMap, xSize, ySize);
-    getWayPoints(idealArrayMap, xSize, ySize, 100, 100, 500.0, 250.0);
-    printToFile("mapa_ideal.txt", idealArrayMap, xSize, ySize, true);
+
+
+    //vytvor pomocne pole
+    int** tmpMap = new int*[xSize];
+
+    for(int i=0; i<xSize; i++)
+    {
+        tmpMap[i]=new int[ySize];
+
+        for(int j=0; j<ySize; j++)
+        {
+            tmpMap[i][j] = idealArrayMap[i][j];
+        }
+    }
+
+    expandObstacles(tmpMap, xSize, ySize);
+    getWayPoints(tmpMap, xSize, ySize, curX, curY, reqX, reqY);
+    printToFile("mapa_ideal.txt", tmpMap, xSize, ySize, true);
+
+//    printToFile("IDEAL.txt", idealArrayMap, xSize, ySize, false);
+
+    // dealokuj pomocne pole
+    for( int i = 0 ; i < xSize; i++ )
+    {
+        delete[] tmpMap[i];
+    }
+    delete[] tmpMap;
+
 }
 
 //UDP lidar
@@ -583,13 +650,21 @@ void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double
         wayPoints.pop();
     }
 
-
-    if (map[x][y] == 0 && map[(int)pointFin.x][(int)pointFin.y] == 0){
-        map[x][y] = -1;
-        map[(int)pointFin.x][(int)pointFin.y] = 2;
+    if (x > 0 && y > 0 && x < xSize && y < ySize){
+        if (map[x][y] == 0 && map[(int)pointFin.x][(int)pointFin.y] == 0){
+            map[x][y] = -1;
+            map[(int)pointFin.x][(int)pointFin.y] = 2;
+            ui->label_19->setText("OK");
+        }
+        else{
+            //std::cout<<"Moja pozicia alebo ciel v prekazke"<<endl;
+            ui->label_19->setText("unreachable positions");
+            return;
+        }
     }
     else{
-        std::cout<<"Moja pozicia alebo ciel v prekazke"<<endl;
+        //std::cout<<"Moja pozicia alebo ciel v prekazke"<<endl;
+        ui->label_19->setText("invalid or out of map position");
         return;
     }
 
@@ -612,17 +687,24 @@ void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double
 
         newDirection = setDirection(map, xSize, ySize, x, y, oldDirection);
 
+        // nie je cesta (ciel je mimo bludiska)
+        if (newDirection == 20){
+            ui->label_19->setText("impossible path");
+            break;
+        }
+
+        //narazil na ciel
         if (newDirection == 10){
-            p.x = finX;
-            p.y = finY;
+            p.x = finX/100;
+            p.y = finY/100;
             wayPoints.push(p);
             wayPoints.pop();
             break;
         }
 
         if (newDirection != oldDirection){
-            p.x = x*widthOfCell - widthOfCell/2.0;
-            p.y = y*widthOfCell - widthOfCell/2.0;
+            p.x = (x*widthOfCell - widthOfCell/2.0)/100;
+            p.y = (y*widthOfCell - widthOfCell/2.0)/100;
             wayPoints.push(p);
         }
 
@@ -643,7 +725,7 @@ void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double
 int MainWindow::setDirection(int** map, int xSize, int ySize, int x, int y, int oldDirection){
 
     int min = 1000000;
-    int direction = 1;
+    int direction = 20; //zaciatocna
 
 
     if (x+1 < xSize && map[x+1][y] > 1 && map[x+1][y] <= min) {
@@ -1217,11 +1299,27 @@ void MainWindow::printToFile(char* file,int** map, int xSize, int ySize, bool po
         {
             myfile<<"\n\nBODY:\n"<<' ';
             queue<Point> wayPointsCopy = wayPoints;
+            QString tmpp = "";
+
             while(!wayPointsCopy.empty()) {
 
                 myfile<< wayPointsCopy.front().x<<' ';
                 myfile<< wayPointsCopy.front().y<<"\n";
+
+                tmpp.append("[ ");
+                tmpp.append(QString::number(wayPointsCopy.front().x));
+                tmpp.append(" ; ");
+                tmpp.append(QString::number(wayPointsCopy.front().y));
+                tmpp.append(" ]\n");
                 wayPointsCopy.pop();
+
+            }
+
+            if (wayPoints.empty())
+                ui->textEdit->setText(" ");
+            else{
+                const QString tmp = tmpp;
+                ui->textEdit->setText(tmp);
             }
         }
         myfile.close();
