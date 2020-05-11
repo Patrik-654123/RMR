@@ -131,9 +131,9 @@ void MainWindow::processThisRobot()
         robotdata.robotOn=true;
 
         robotdata.robotX=6;
-        robotdata.robotReqX=8.5;
+        robotdata.robotReqX=8;
         robotdata.robotY=6;
-        robotdata.robotReqY=7.5;
+        robotdata.robotReqY=9;
 
         robotdata.robotReqSpeed=0;
         robotdata.robotSpeed=0;
@@ -271,7 +271,7 @@ void MainWindow::on_pushButton_7_clicked() //LIDAR scan
 void MainWindow::on_pushButton_11_clicked() //planovanie z robot mapy
 {
     // planovanie v nami spravenej mape
-    if(map_x != 0) ///////////////////////////////////////////////////////////////////////
+    if(map_x != 0) 
     {
         mutex.lock();
 
@@ -299,18 +299,12 @@ void MainWindow::on_pushButton_11_clicked() //planovanie z robot mapy
 
         printToFile("mapa_robot.txt", tmpMap, map_x, map_y, true);
 
-
-
-
         // dealokuj pomocne pole
         for( int i = 0 ; i < map_x ; i++ )
         {
             delete[] tmpMap[i];
         }
         delete[] tmpMap;
-
-
-
 
         mutex.unlock();
     }
@@ -1264,7 +1258,9 @@ void MainWindow::choseTransition()
   pass_y=(transitions.front().second)/1000;
   dist_best=sqrt(pow(rx-pass_x,2.0)+pow(ry-pass_y,2.0))+sqrt(pow(pass_x-rrx,2.0)+pow(pass_y-rry,2.0));
   transition_tmp=transitions.front();
-  transitions.pop();
+
+  //transitions.pop();
+
   while(!transitions.empty())
   {
       pass_x=(transitions.front().first)/1000;

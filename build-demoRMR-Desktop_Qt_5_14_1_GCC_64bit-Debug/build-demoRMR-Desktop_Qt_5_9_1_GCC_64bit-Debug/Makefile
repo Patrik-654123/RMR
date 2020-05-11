@@ -1081,6 +1081,10 @@ compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_ui
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QSpacerItem \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QStatusBar \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qstatusbar.h \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QTextEdit \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qtextedit.h \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtGui/qtextdocument.h \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QVBoxLayout \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtWidgets/QWidget \
 		../../../../Qt5.9.1/5.9.1/gcc_64/include/QtGui/QPainter \
