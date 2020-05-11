@@ -131,7 +131,7 @@ void MainWindow::processThisRobot()
         robotdata.robotOn=true;
 
         robotdata.robotX=6;
-        robotdata.robotReqX=8;
+        robotdata.robotReqX=7.5;
         robotdata.robotY=6;
         robotdata.robotReqY=9;
 
