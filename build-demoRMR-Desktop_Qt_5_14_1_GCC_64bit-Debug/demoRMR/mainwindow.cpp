@@ -644,7 +644,7 @@ void MainWindow::getWayPoints(int** map, int xSize, int ySize, double rx, double
         wayPoints.pop();
     }
 
-    if (x > 0 && y > 0 && x < xSize && y < ySize){
+    if (x > 0 && y > 0 && x < xSize && y < ySize && (int)pointFin.x > 0 && (int)pointFin.y > 0 && (int)pointFin.x < xSize && (int)pointFin.y < ySize){
         if (map[x][y] == 0 && map[(int)pointFin.x][(int)pointFin.y] == 0){
             map[x][y] = -1;
             map[(int)pointFin.x][(int)pointFin.y] = 2;
